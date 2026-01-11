@@ -13,8 +13,7 @@ const Hero = () => {
                         Break your APK
                         <br />
                         Before your attackers do
-                        <br />
-                        Platform
+
                     </h1>
                     <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto mb-6 sm:mb-8 md:mb-10">
                         Expose Android app vulnerabilities in minutes.
