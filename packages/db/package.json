@@ -22,5 +22,8 @@
     "@types/pg": "^8.16.0",
     "prisma": "^7.2.0",
     "typescript": "^5.9.3"
+  },
+  "exports": {
+    ".": "./src/index.ts"
   }
 }
