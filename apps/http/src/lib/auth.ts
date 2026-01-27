@@ -2,6 +2,12 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@sandboox/db";
 
+
+
+//Database Adapter
+//Authentication methods
+//OAuth Providers
+
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
         provider: 'postgresql',
@@ -15,5 +21,8 @@ export const auth = betterAuth({
             clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
         }
     },
-    trustedOrigins: ['http://localhost:3000'], //frontend url
+    trustedOrigins: [
+        'http://localhost:3000', //frontend url
+        'http://localhost:3001', //allow API testing from same origin
+    ],
 })
