@@ -9,6 +9,14 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ApkStatus {
+  UPLOADED // File uploaded successfully
+  PROCESSING // Analysis in progress
+  COMPLETED // Analysis done
+  FAILED // Analysis failed
+  DELETED // Soft delete
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String?
@@ -20,6 +28,7 @@ model User {
 
   accounts Account[]
   sessions Session[]
+  apks     Apk[]
 }
 
 model Account {
@@ -38,6 +47,43 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
+}
+
+model Apk {
+  id               String    @id @default(cuid())
+  userId           String
+  fileName         String //original filename
+  fielSize         Int //in bytes
+  filePath         String //relative path (migtht need to use uploadthing for this)
+  packageName      String?
+  versionName      String?
+  versionCode      Int?
+  minSdkVersion    Int?
+  targetSdkVersion Int?
+  uploadedAt       DateTime  @default(now())
+  status           ApkStatus @default(UPLOADED)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysis Analysis?
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Analysis {
+  id              String    @id @default(cuid())
+  apkId           String    @unique
+  vulnerabilities Json? // Store vulnerability array
+  permissions     Json? // Store permissions array
+  securityScore   Float? // 0-100 score
+  decompiled      Boolean   @default(false)
+  decompiledPath  String?
+  manifestData    Json?
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  errorMessage    String?
+
+  apk Apk @relation(fields: [apkId], references: [id], onDelete: Cascade)
 }
 
 model Session {
