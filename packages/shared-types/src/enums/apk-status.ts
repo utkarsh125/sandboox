@@ -1,0 +1,7 @@
+export enum ApkStatus {
+    UPLOADED = 'UPLOADED',
+    PROCESSING = 'PROCESSING',
+    COMPLETED = 'COMPLETED',
+    FAILED = 'FAILED',
+    DELETED = 'DELETED'
+}

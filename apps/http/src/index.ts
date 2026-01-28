@@ -8,6 +8,14 @@ import { logger } from "hono/logger"
 import { serve } from "@hono/node-server"
 import { auth } from "./lib/auth"
 
+import {
+    ApkStatus,
+    type Apk,
+    type ApkUploadResponse,
+    type ApiErrorResponse
+} from '@sandboox/shared-types';
+
+console.log("ApkStatus: ", ApkStatus.UPLOADED);
 
 //TODO: define what data is available in the context
 type Variables = {
