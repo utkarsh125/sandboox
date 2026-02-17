@@ -7,6 +7,7 @@ import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 import { serve } from "@hono/node-server"
 import { auth } from "./lib/auth"
+import { uploadthingHandlers } from "./routes/uploadthing"
 
 import {
     ApkStatus,
@@ -15,7 +16,7 @@ import {
     type ApiErrorResponse
 } from '@sandboox/shared-types';
 
-console.log("ApkStatus: ", ApkStatus.UPLOADED);
+// console.log("ApkStatus: ", ApkStatus.UPLOADED);
 
 //TODO: define what data is available in the context
 type Variables = {
@@ -135,6 +136,16 @@ app.on(['POST', 'GET'],
     // api/auth/sign-out
     // api/auth/session
 )
+
+//todo: uploadthing routes
+
+app.post('/api/uploadthing', async (c) => {
+    return uploadthingHandlers.POST(c);
+});
+
+app.get('/api/uploadthing', async (c) => {
+    return uploadthingHandlers.GET(c);
+});
 
 
 //health check
