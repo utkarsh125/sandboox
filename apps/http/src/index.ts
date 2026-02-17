@@ -7,7 +7,6 @@ import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 import { serve } from "@hono/node-server"
 import { auth } from "./lib/auth"
-import { uploadthingHandlers } from "./routes/uploadthing"
 
 import {
     ApkStatus,
@@ -15,6 +14,7 @@ import {
     type ApkUploadResponse,
     type ApiErrorResponse
 } from '@sandboox/shared-types';
+import { uploadthingApp } from './routes/uploadthing';
 
 // console.log("ApkStatus: ", ApkStatus.UPLOADED);
 
@@ -138,14 +138,7 @@ app.on(['POST', 'GET'],
 )
 
 //todo: uploadthing routes
-
-app.post('/api/uploadthing', async (c) => {
-    return uploadthingHandlers.POST(c);
-});
-
-app.get('/api/uploadthing', async (c) => {
-    return uploadthingHandlers.GET(c);
-});
+app.route("/api", uploadthingApp);
 
 
 //health check
