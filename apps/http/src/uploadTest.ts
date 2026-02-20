@@ -29,7 +29,7 @@ async function runTest() {
         const fileBuffer = fs.readFileSync(apkPath);
 
         const file = new File([fileBuffer], "test.apk", {
-            type: "application/octet-stream"
+            type: "application/vnd.android.package-archive"
         });
 
         const response = await ut_api.uploadFiles([file]);

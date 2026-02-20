@@ -15,6 +15,8 @@ import {
     type ApiErrorResponse
 } from '@sandboox/shared-types';
 import { uploadthingApp } from './routes/uploadthing';
+import { analyzeRoutes } from './routes/analyze';
+import { testAnalyzeRoutes } from './routes/testAnalyze';
 
 // console.log("ApkStatus: ", ApkStatus.UPLOADED);
 
@@ -138,8 +140,13 @@ app.on(['POST', 'GET'],
 )
 
 //todo: uploadthing routes
-app.route("/api", uploadthingApp);
+app.route("/api/uploadthing", uploadthingApp);
 
+//todo: analyze routes
+app.route("/api", analyzeRoutes);
+
+//test routes (no auth)
+app.route("/api", testAnalyzeRoutes);
 
 //health check
 app.get('/', (c) => {

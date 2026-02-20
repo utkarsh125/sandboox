@@ -17,5 +17,13 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "ioredis": "5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "ioredis": "5.9.3"
+    }
   }
 }
