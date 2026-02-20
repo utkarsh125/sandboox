@@ -10,6 +10,7 @@ datasource db {
 }
 
 enum ApkStatus {
+  PENDING // Queued for processing
   UPLOADED // File uploaded successfully
   PROCESSING // Analysis in progress
   COMPLETED // Analysis done
@@ -52,9 +53,10 @@ model Account {
 model Apk {
   id               String    @id @default(cuid())
   userId           String
-  fileName         String //original filename
-  fielSize         Int //in bytes
-  filePath         String //relative path (migtht need to use uploadthing for this)
+  fileName         String? //original filename
+  fileSize         Int? //in bytes
+  filePath         String? //relative path (might need to use uploadthing for this)
+  sourceUrl        String? //github URL for APK source
   packageName      String?
   versionName      String?
   versionCode      Int?
