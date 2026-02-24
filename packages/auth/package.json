@@ -1,0 +1,28 @@
+{
+  "name": "@sandboox/auth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@sandboox/db": "workspace:*",
+    "@sandboox/shared-types": "workspace:*",
+    "better-auth": "1.4.19",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "typescript": "latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "exports": {
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts"
+  }
+}

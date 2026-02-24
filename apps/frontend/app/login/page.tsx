@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { signIn } from "@/lib/auth-client";
+import { signIn } from "@sandboox/auth/client";
 import { useRouter } from "next/navigation";
 
 export default function SignIn() {

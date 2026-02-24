@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { apkAnalysisQueue } from "../lib/queue";
 import { prisma } from "@sandboox/db";
-import { github } from "better-auth";
+import { Variables } from "../types";
 
-export const analyzeRoutes = new Hono();
+export const analyzeRoutes = new Hono<{ Variables: Variables }>();
 
 analyzeRoutes.post("/analyze/github", async (c) => {
     const user = c.get("user");

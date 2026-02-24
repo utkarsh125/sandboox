@@ -6,8 +6,7 @@ import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 import { serve } from "@hono/node-server"
-import { auth } from "./lib/auth"
-
+import { Variables } from './types';
 import {
     ApkStatus,
     type Apk,
@@ -17,14 +16,6 @@ import {
 import { uploadthingApp } from './routes/uploadthing';
 import { analyzeRoutes } from './routes/analyze';
 import { testAnalyzeRoutes } from './routes/testAnalyze';
-
-// console.log("ApkStatus: ", ApkStatus.UPLOADED);
-
-//TODO: define what data is available in the context
-type Variables = {
-    user: typeof auth.$Infer.Session.user | null;
-    session: typeof auth.$Infer.Session.session | null;
-}
 
 
 //dotenv/config must be imported FIRST to load env variables
@@ -88,33 +79,33 @@ app.use(
 
 
 //session middleware
-app.use('*', async (c, next) => {
-    //on every request, check if there's a session cookie
-    //extract user and session from better-auth
-    const session = await auth.api.getSession({
-        headers: c.req.raw.headers,
-    })
+// app.use('*', async (c, next) => {
+//     //on every request, check if there's a session cookie
+//     //extract user and session from better-auth
+//     const session = await auth.api.getSession({
+//         headers: c.req.raw.headers,
+//     })
 
-    //if session-cookie not found, set user and session to null
-    if (!session) {
-        c.set('user', null);
-        c.set('session', null);
-        await next();
-        return;
-    }
+//     //if session-cookie not found, set user and session to null
+//     if (!session) {
+//         c.set('user', null);
+//         c.set('session', null);
+//         await next();
+//         return;
+//     }
 
-    //if yes, set user and session in context with
-    c.set('user', session.user);
-    c.set('session', session.session);
+//     //if yes, set user and session in context with
+//     c.set('user', session.user);
+//     c.set('session', session.session);
 
-    //continue to the next middleware/route
-    await next();
+//     //continue to the next middleware/route
+//     await next();
 
 
-    //every route can access 'c.get('user') and 'c.get('session')'
-    //no need to manually check auth in each route
-    //routes just check if user exists or not
-})
+//     //every route can access 'c.get('user') and 'c.get('session')'
+//     //no need to manually check auth in each route
+//     //routes just check if user exists or not
+// })
 
 //error handler
 app.onError((err, c) => {
@@ -127,17 +118,17 @@ app.onError((err, c) => {
 
 
 //better-auth routes
-app.on(['POST', 'GET'],
-    '/api/auth/*', //mount better-auth handler at /api/auth/*
-    (c) => {
-        return auth.handler(c.req.raw);
-    }
-    //this automatically creates all auth routes
-    // /api/auth/sign-up/email
-    // api/auth/sign-in/email
-    // api/auth/sign-out
-    // api/auth/session
-)
+// app.on(['POST', 'GET'],
+//     '/api/auth/*', //mount better-auth handler at /api/auth/*
+//     (c) => {
+//         return auth.handler(c.req.raw);
+//     }
+//     //this automatically creates all auth routes
+//     // /api/auth/sign-up/email
+//     // api/auth/sign-in/email
+//     // api/auth/sign-out
+//     // api/auth/session
+// )
 
 //todo: uploadthing routes
 app.route("/api/uploadthing", uploadthingApp);
