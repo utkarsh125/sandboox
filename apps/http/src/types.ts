@@ -1,6 +1,6 @@
-import { auth } from "./lib/auth";
+import { User, Session } from "@sandboox/auth/server";
 
-export type Variables = {
-    user: typeof auth.$Infer.Session.user | null;
-    session: typeof auth.$Infer.Session.session | null;
+export interface Variables {
+    user: User | null;
+    session: Session | null;
 }
