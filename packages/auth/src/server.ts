@@ -1,7 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@sandboox/db";
-import "server-only"; // what does this shit do? -> prevents this file from ever being bundled inthe frontend 
 
 export const auth = betterAuth({
 

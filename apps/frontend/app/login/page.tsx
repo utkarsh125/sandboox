@@ -44,10 +44,10 @@ export default function SignIn() {
         try {
             await signIn.social({
                 provider,
-                callbackURL: "/dashboard",
+                callbackURL: `${window.location.origin}/dashboard`,
             });
         } catch (err) {
-            setError(`Failed to sign in with ${provider}`);
+            setError(`Failed to sign in with ${provider} `);
             console.error(err);
             setLoading(false);
         }
