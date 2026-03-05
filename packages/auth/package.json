@@ -8,6 +8,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
+    "@better-auth/prisma-adapter": "^1.5.3",
     "@sandboox/db": "workspace:*",
     "@sandboox/shared-types": "workspace:*",
     "better-auth": "1.5.3",
