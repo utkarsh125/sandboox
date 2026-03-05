@@ -30,6 +30,7 @@ model User {
   accounts Account[]
   sessions Session[]
   apks     Apk[]
+  projects Project[]
 }
 
 model Account {
@@ -87,6 +88,20 @@ model Analysis {
   errorMessage    String?
 
   apk Apk @relation(fields: [apkId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  testType    String
+  outcome     String   @default("APK") //"APK", "WEB", will add WEB later.
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Session {

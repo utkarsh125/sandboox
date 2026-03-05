@@ -13,6 +13,7 @@ import { Variables } from './types';
 import { authRoutes } from "./routes/auth";
 import { analyzeRoutes } from "./routes/analyze";
 import { sessionMiddleware } from "./middleware/auth";
+import { projectRoutes } from "./routes/projects";
 
 // init hono app instance with typed context
 const app = new Hono<{ Variables: Variables }>();
@@ -54,6 +55,10 @@ app.route("/api/auth", authRoutes);
 // Analyze Routes (APK processing logic)
 // Mounted at /api/analyze
 app.route("/api/analyze", analyzeRoutes);
+
+//Project Routes (create, list)
+//mounted at /api/projects
+app.route("/api/projects", projectRoutes);
 
 // health check
 app.get('/', (c) => {
