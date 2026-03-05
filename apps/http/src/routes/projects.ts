@@ -16,7 +16,7 @@ projectRoutes.post("/", async (c) => {
         }, 401)
     }
 
-    const { name, description, testType } = await c.req.json();
+    const { name, description, testType, sourceUrl, fileName } = await c.req.json();
 
     if (!name) {
         return c.json({
@@ -32,6 +32,19 @@ projectRoutes.post("/", async (c) => {
             userId: user.id
         }
     })
+
+    // If sourceUrl is provided, create an Apk record
+    if (sourceUrl) {
+        await prisma.apk.create({
+            data: {
+                userId: user.id,
+                projectId: project.id,
+                sourceUrl: sourceUrl,
+                fileName: fileName || null,
+                status: sourceUrl.includes("github.com") ? "READY" : "UPLOADED"
+            }
+        })
+    }
 
     return c.json({
         success: true,

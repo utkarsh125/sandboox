@@ -3,7 +3,7 @@ import axios from "axios";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
 const apiInstance = axios.create({
-    baseURL: BACKEND_URL,
+    baseURL: "",
     withCredentials: true,
     //important: this shares cookies with backend
 });

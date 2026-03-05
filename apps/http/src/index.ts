@@ -21,12 +21,8 @@ const app = new Hono<{ Variables: Variables }>();
 // logger middleware - logs every incoming request to console
 app.use('*', logger());
 
-// Session middleware - checks for a session on every request
-// Sets 'user' and 'session' in the Hono context
-app.use('*', sessionMiddleware);
-
-// cors config
-// Note: credentials: true is required for sharing cookies between domains
+// cors config — MUST come before session middleware
+// so that preflight requests succeed and cookies are sent cross-origin
 app.use(
     '*',
     cors({
@@ -36,6 +32,10 @@ app.use(
         credentials: true,
     })
 )
+
+// Session middleware - checks for a session on every request
+// Sets 'user' and 'session' in the Hono context
+app.use('*', sessionMiddleware);
 
 // error handler
 app.onError((err, c) => {

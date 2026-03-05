@@ -1,37 +1,36 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Plus } from '@phosphor-icons/react'
 import { NewProjectModal, ProjectsTable } from '../components'
 import type { Project } from '../components/ProjectsTable'
+import axios from 'axios'
 
-// Sample data – replace with real data from API later
-const sampleProjects: Project[] = [
-    {
-        id: '1',
-        name: 'My Banking App',
-        description: 'Security audit for mobile banking application',
-        testType: 'APK',
-        outcome: 'Passed',
-    },
-    {
-        id: '2',
-        name: 'E-Commerce App',
-        description: 'Vulnerability scan for shopping platform',
-        testType: 'APK',
-        outcome: 'Failed',
-    },
-    {
-        id: '3',
-        name: 'Health Tracker',
-        description: 'Privacy and data leak analysis',
-        testType: 'APK',
-        outcome: 'Pending',
-    },
-]
+
 
 const ProjectsPage = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchProjects = async () => {
+        try {
+            const { data } = await axios.get(
+                `/api/projects`,
+                {
+                    withCredentials: true
+                }
+            )
+
+            setProjects(data.projects)
+        } catch (err) {
+            console.error("Failed to fetch: ", err);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => { fetchProjects() }, []);
     return (
         <div className="p-8 space-y-6">
             {/* Header */}
@@ -50,12 +49,21 @@ const ProjectsPage = () => {
             </div>
 
             {/* Projects Table */}
-            <ProjectsTable projects={sampleProjects} />
+            {loading ? (
+                <div className='text-sm text-gray-400 text-center py-12'>
+                    Loading projects...
+                </div>
+            ) : (
+                <ProjectsTable projects={projects} />
+            )}
 
             {/* New Project Modal */}
             <NewProjectModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false)
+                    fetchProjects() //refresh the list
+                }}
             />
         </div>
     )

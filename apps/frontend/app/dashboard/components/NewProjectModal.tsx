@@ -1,15 +1,16 @@
 "use client"
 import React, { useState } from 'react'
 import {
-    X,
-    AndroidLogo,
-    GlobeSimple,
-    Lock,
-    ArrowLeft,
-    TextT,
-    NotePencil,
-    Rocket
+    XIcon,
+    AndroidLogoIcon,
+    GlobeSimpleIcon,
+    LockIcon,
+    ArrowLeftIcon,
+    TextTIcon,
+    NotePencilIcon,
+    RocketIcon
 } from '@phosphor-icons/react'
+import axios from 'axios'
 
 interface NewProjectModalProps {
     isOpen: boolean
@@ -43,10 +44,24 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
         setTestType(null)
     }
 
-    const handleCreate = () => {
-        console.log("Creating project:", { name, description, testType })
-        // TODO: POST to /api/projects
-        handleClose()
+    const handleCreate = async () => {
+        try {
+            const { data } = await axios.post(
+                `/api/projects`,
+                {
+                    name,
+                    description,
+                    testType
+                },
+                {
+                    withCredentials: true
+                }
+            )
+            console.log("Project created:", data)
+            handleClose()
+        } catch (err) {
+            console.error("Failed to create project:", err)
+        }
     }
 
     if (!isOpen) return null
@@ -69,7 +84,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                 onClick={handleBack}
                                 className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                             >
-                                <ArrowLeft size={18} className="text-gray-500" />
+                                <ArrowLeftIcon size={18} className="text-gray-500" />
                             </button>
                         )}
                         <div>
@@ -87,7 +102,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                         onClick={handleClose}
                         className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                     >
-                        <X size={20} className="text-gray-400" />
+                        <XIcon size={20} className="text-gray-400" />
                     </button>
                 </div>
 
@@ -101,7 +116,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                 className="w-full group flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all cursor-pointer"
                             >
                                 <div className="w-12 h-12 rounded-xl bg-green-50 border border-green-100 flex items-center justify-center shrink-0 group-hover:bg-green-100 transition-colors">
-                                    <AndroidLogo size={24} weight="duotone" className="text-green-600" />
+                                    <AndroidLogoIcon size={24} weight="duotone" className="text-green-600" />
                                 </div>
                                 <div className="text-left flex-1">
                                     <div className="font-medium text-gray-900 text-sm">APK Testing</div>
@@ -121,7 +136,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                     className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50 opacity-60 cursor-not-allowed"
                                 >
                                     <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
-                                        <GlobeSimple size={24} weight="duotone" className="text-gray-400" />
+                                        <GlobeSimpleIcon size={24} weight="duotone" className="text-gray-400" />
                                     </div>
                                     <div className="text-left flex-1">
                                         <div className="font-medium text-gray-500 text-sm">Website Testing</div>
@@ -130,7 +145,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-1 text-xs font-medium text-gray-400 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-full">
-                                        <Lock size={12} weight="bold" />
+                                        <LockIcon size={12} weight="bold" />
                                         Locked
                                     </div>
                                 </button>
@@ -158,14 +173,14 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                         <div className="p-6 space-y-5">
                             {/* Selected type indicator */}
                             <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-green-50 border border-green-100">
-                                <AndroidLogo size={18} weight="duotone" className="text-green-600" />
+                                <AndroidLogoIcon size={18} weight="duotone" className="text-green-600" />
                                 <span className="text-xs font-medium text-green-700">APK Testing</span>
                             </div>
 
                             {/* Name field */}
                             <div className="space-y-1.5">
                                 <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                                    <TextT size={16} className="text-gray-400" />
+                                    <TextTIcon size={16} className="text-gray-400" />
                                     Project Name
                                 </label>
                                 <input
@@ -180,7 +195,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                             {/* Description field */}
                             <div className="space-y-1.5">
                                 <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                                    <NotePencil size={16} className="text-gray-400" />
+                                    <NotePencilIcon size={16} className="text-gray-400" />
                                     Description
                                 </label>
                                 <textarea
@@ -206,7 +221,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                 disabled={!name.trim()}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors cursor-pointer shadow-sm"
                             >
-                                <Rocket size={16} weight="bold" />
+                                <RocketIcon size={16} weight="bold" />
                                 Create Project
                             </button>
                         </div>
