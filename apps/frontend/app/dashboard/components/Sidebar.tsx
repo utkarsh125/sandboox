@@ -1,13 +1,16 @@
 "use client"
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
     House,
     FolderSimple,
     User,
-    Snowflake
+    Snowflake,
+    SignOut,
+    CaretUp
 } from '@phosphor-icons/react'
+import { signOut } from '@sandboox/auth/client'
 
 interface NavItemProps {
     icon: React.ReactNode
@@ -30,6 +33,32 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, href, isActive }) => {
 
 const Sidebar: React.FC = () => {
     const pathname = usePathname()
+    const router = useRouter()
+    const [accountOpen, setAccountOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setAccountOpen(false)
+            }
+        }
+        if (accountOpen) {
+            document.addEventListener('mousedown', handleClickOutside)
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [accountOpen])
+
+    const handleLogout = async () => {
+        await signOut({
+            fetchOptions: {
+                onSuccess: () => {
+                    router.push('/login')
+                }
+            }
+        })
+    }
 
     return (
         <aside className="w-64 bg-white border-r border-gray-100 h-screen flex flex-col overflow-y-auto">
@@ -61,8 +90,34 @@ const Sidebar: React.FC = () => {
                     <div className="px-3 mb-2">
                         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Settings</span>
                     </div>
-                    <div className="space-y-0.5">
-                        <NavItem icon={<User size={18} />} label="Account" href="/dashboard/account" isActive={pathname === '/dashboard/account'} />
+                    <div className="space-y-0.5 relative" ref={dropdownRef}>
+                        <button
+                            onClick={() => setAccountOpen(!accountOpen)}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer ${accountOpen ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                        >
+                            <span className="w-5 h-5 flex items-center justify-center">
+                                <User size={18} />
+                            </span>
+                            <span className="flex-1 text-left">Account</span>
+                            <CaretUp
+                                size={14}
+                                className={`text-gray-400 transition-transform ${accountOpen ? '' : 'rotate-180'}`}
+                            />
+                        </button>
+
+                        {/* Dropdown */}
+                        {accountOpen && (
+                            <div className="absolute bottom-full left-0 w-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                >
+                                    <SignOut size={16} weight="bold" />
+                                    <span>Log out</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </nav>

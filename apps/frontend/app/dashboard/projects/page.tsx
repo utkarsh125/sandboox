@@ -16,7 +16,7 @@ const ProjectsPage = () => {
     const fetchProjects = async () => {
         try {
             const { data } = await axios.get(
-                `/api/projects`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`,
                 {
                     withCredentials: true
                 }

@@ -8,7 +8,11 @@ import {
     ArrowLeftIcon,
     TextTIcon,
     NotePencilIcon,
-    RocketIcon
+    RocketIcon,
+    GithubLogoIcon,
+    UploadSimpleIcon,
+    LinkIcon,
+    CheckCircleIcon
 } from '@phosphor-icons/react'
 import axios from 'axios'
 
@@ -25,12 +29,17 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
     const [testType, setTestType] = useState<TestType>(null)
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
+    const [sourceUrl, setSourceUrl] = useState('')
+
+    const isGithubUrl = sourceUrl.startsWith('https://github.com/')
+    const githubPath = isGithubUrl ? sourceUrl.replace('https://github.com/', '') : ''
 
     const handleClose = () => {
         setStep('select')
         setTestType(null)
         setName('')
         setDescription('')
+        setSourceUrl('')
         onClose()
     }
 
@@ -51,7 +60,9 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                 {
                     name,
                     description,
-                    testType
+                    testType,
+                    sourceUrl: sourceUrl || undefined,
+                    fileName: isGithubUrl ? sourceUrl.split('/').pop() : undefined
                 },
                 {
                     withCredentials: true
@@ -206,6 +217,79 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                     className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-white placeholder:text-gray-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-50 transition-all resize-none"
                                 />
                             </div>
+
+                            {/* APK Source */}
+                            <div className="space-y-3">
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <LinkIcon size={16} className="text-gray-400" />
+                                    APK Source
+                                </label>
+
+                                {/* GitHub URL Input */}
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        {isGithubUrl ? (
+                                            <div className="flex items-center gap-2 w-full px-3.5 py-2.5 text-sm border border-green-200 rounded-xl bg-green-50/50">
+                                                <GithubLogoIcon size={18} weight="fill" className="text-gray-900 shrink-0" />
+                                                <span className="text-gray-500">/</span>
+                                                <span className="text-gray-700 truncate flex-1 font-mono text-xs">{githubPath}</span>
+                                                <CheckCircleIcon size={18} weight="fill" className="text-green-500 shrink-0" />
+                                                <button
+                                                    onClick={() => setSourceUrl('')}
+                                                    className="p-0.5 hover:bg-green-100 rounded transition-colors cursor-pointer"
+                                                >
+                                                    <XIcon size={14} className="text-gray-400" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={sourceUrl}
+                                                onChange={(e) => setSourceUrl(e.target.value)}
+                                                placeholder="https://github.com/user/repo/tree/main/app.apk"
+                                                className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-white placeholder:text-gray-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-50 transition-all"
+                                            />
+                                        )}
+                                    </div>
+                                    {sourceUrl && !isGithubUrl && (
+                                        <p className="text-xs text-amber-600 flex items-center gap-1">
+                                            URL must start with https://github.com/
+                                        </p>
+                                    )}
+                                    {isGithubUrl && (
+                                        <p className="text-xs text-green-600 flex items-center gap-1">
+                                            <CheckCircleIcon size={12} weight="bold" />
+                                            GitHub URL detected — project will be created with status READY
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Divider */}
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1 h-px bg-gray-200" />
+                                    <span className="text-xs text-gray-400 font-medium">OR</span>
+                                    <div className="flex-1 h-px bg-gray-200" />
+                                </div>
+
+                                {/* Upload APK — Disabled */}
+                                <div className="relative group">
+                                    <button
+                                        disabled
+                                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm border border-gray-100 rounded-xl bg-gray-50/50 opacity-60 cursor-not-allowed"
+                                    >
+                                        <UploadSimpleIcon size={18} className="text-gray-400" />
+                                        <span className="text-gray-400">Upload APK file</span>
+                                        <div className="ml-auto flex items-center gap-1 text-xs font-medium text-gray-400 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+                                            <LockIcon size={10} weight="bold" />
+                                            Coming Soon
+                                        </div>
+                                    </button>
+                                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg">
+                                        Direct file upload coming soon
+                                        <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-gray-900"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Footer with create button */}
@@ -218,7 +302,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                             </button>
                             <button
                                 onClick={handleCreate}
-                                disabled={!name.trim()}
+                                disabled={!name.trim() || !isGithubUrl}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors cursor-pointer shadow-sm"
                             >
                                 <RocketIcon size={16} weight="bold" />

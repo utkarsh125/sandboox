@@ -55,7 +55,15 @@ projectRoutes.post("/", async (c) => {
 //List user's projects
 projectRoutes.get("/", async (c) => {
 
+    console.log("Project ROUTES HIT!");
+
+
     const user = c.get("user");
+
+    //the user is not being hit since the log is NULL;
+    console.log("USER:", user);
+
+
     if (!user) return c.json({
         error: "Unauthorized"
     }, 401)
@@ -68,8 +76,7 @@ projectRoutes.get("/", async (c) => {
             createdAt: "desc"
         }
     });
-
-
+    console.log(projects);
     return c.json({ projects });
 
 })
