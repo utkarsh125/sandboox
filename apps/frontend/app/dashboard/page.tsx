@@ -1,17 +1,18 @@
+
 import React from 'react';
 import { getSession } from "@/lib/sessions";
+import {
+    StatCard,
+    LineChart,
+    BarChart,
+    DonutChart,
+    ActivitiesList
+} from './components';
 
 export default async function DashboardPage() {
-    const session = await getSession();
-
     return (
-        <div className="p-8">
-            <h1 className="text-2xl font-bold">Dashboard</h1>
-            {session && (
-                <p className="mt-4 text-gray-600">
-                    Welcome back, {session.user?.name || session.user?.email}
-                </p>
-            )}
+        <div className="p-8 space-y-8 max-w-7xl mx-auto">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
         </div>
     );
 }

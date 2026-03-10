@@ -9,11 +9,11 @@ import { Variables } from "../types";
 export const sessionMiddleware = createMiddleware<{ Variables: Variables }>(async (c, next) => {
 
     //check: session cookie in the header
-    console.log("DEBUG cookies:", c.req.raw.headers.get("cookie"));
+    // console.log("DEBUG cookies:", c.req.raw.headers.get("cookie"));
     const session = await auth.api.getSession({
         headers: c.req.raw.headers,
     })
-    console.log("DEBUG session result:", session ? "found" : "null");
+    // console.log("DEBUG session result:", session ? "found" : "null");
 
     //inject results into hono context
     if (!session) {

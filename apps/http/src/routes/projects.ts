@@ -1,7 +1,7 @@
 import { prisma } from "@sandboox/db";
 import { Hono } from "hono";
 import { Variables } from "../types";
-
+import { apkAnalysisQueue } from "../lib/queue";
 export const projectRoutes = new Hono<{ Variables: Variables }>();
 
 //create a project
@@ -72,6 +72,9 @@ projectRoutes.get("/", async (c) => {
         where: {
             userId: user.id
         },
+        include: {
+            apk: true
+        },
         orderBy: {
             createdAt: "desc"
         }
@@ -80,4 +83,95 @@ projectRoutes.get("/", async (c) => {
     return c.json({ projects });
 
 })
+
+//Rename a project
+projectRoutes.patch("/:id", async (c) => {
+    const user = c.get("user");
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+    const projectId = c.req.param("id");
+    const { name } = await c.req.json();
+
+    if (!name) return c.json({ error: "Name is required" }, 400);
+
+    const existingProject = await prisma.project.findUnique({
+        where: { id: projectId }
+    });
+
+    if (!existingProject || existingProject.userId !== user.id) {
+        return c.json({ error: "Not found" }, 404);
+    }
+
+    const project = await prisma.project.update({
+        where: { id: projectId },
+        data: { name }
+    });
+
+    return c.json({ success: true, project });
+});
+
+//Delete a project
+projectRoutes.delete("/:id", async (c) => {
+
+    console.log("DELETE EP HIT!");
+
+
+    const user = c.get("user");
+    // console.log("SANITY CHECK FOR DA USER!------: ", user);
+
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+    const projectId = c.req.param("id");
+    // console.log("PROJECT ID: ", projectId);
+
+    const existingProject = await prisma.project.findUnique({
+        where: { id: projectId }
+    });
+    // console.log("EXISTING PROJECT DETECTED: ", existingProject);
+
+    if (!existingProject || existingProject.userId !== user.id) {
+        return c.json({ error: "Not found" }, 404);
+    }
+
+    await prisma.project.delete({
+        where: { id: projectId }
+    });
+
+    return c.json({ success: true });
+});
+
+//Start analysis for a project's APK
+projectRoutes.post("/:id/start", async (c) => {
+    const user = c.get("user");
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+    const projectId = c.req.param("id");
+
+    const project = await prisma.project.findFirst({
+        where: { id: projectId, userId: user.id },
+        include: { apk: true }
+    });
+
+    if (!project || !project.apk) {
+        return c.json({ error: "Project or associated APK not found" }, 404);
+    }
+
+    if (project.apk.status === "COMPLETED" || project.apk.status === "PROCESSING") {
+        return c.json({ error: "Analysis already completed or in progress" }, 400);
+    }
+
+    // Update status to PENDING
+    const updatedApk = await prisma.apk.update({
+        where: { id: project.apk.id },
+        data: { status: "PENDING" }
+    });
+
+    // Enqueue the job
+    await apkAnalysisQueue.add("analyze-apk", {
+        apkId: project.apk.id,
+        githubUrl: project.apk.sourceUrl || ""
+    });
+
+    return c.json({ success: true, message: "Analysis started", apk: updatedApk });
+});
 

@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "PORT=3001 tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "npm run clean && tsc",
     "start": "PORT=3001 node dist/index.js",
     "clean": "rm -rf dist"
   },

@@ -1,14 +1,15 @@
 "use client"
 import React, { useEffect, useState } from 'react'
 import { Plus } from '@phosphor-icons/react'
-import { NewProjectModal, ProjectsTable } from '../components'
+import { NewProjectModal, ProjectsTable, ProjectDetailsModal } from '../components'
 import type { Project } from '../components/ProjectsTable'
 import axios from 'axios'
 
 
 
 const ProjectsPage = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
@@ -40,7 +41,7 @@ const ProjectsPage = () => {
                     <p className="text-sm text-gray-500 mt-0.5">Manage and monitor your testing projects</p>
                 </div>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => setIsNewProjectModalOpen(true)}
                     className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 text-white px-3.5 py-2 text-sm font-medium cursor-pointer rounded-lg transition-colors shadow-sm"
                 >
                     <Plus size={16} weight="bold" />
@@ -54,15 +55,30 @@ const ProjectsPage = () => {
                     Loading projects...
                 </div>
             ) : (
-                <ProjectsTable projects={projects} />
+                <ProjectsTable 
+                    projects={projects} 
+                    onRefresh={fetchProjects}
+                    onProjectClick={(project) => setSelectedProject(project)}
+                />
             )}
 
             {/* New Project Modal */}
             <NewProjectModal
-                isOpen={isModalOpen}
+                isOpen={isNewProjectModalOpen}
                 onClose={() => {
-                    setIsModalOpen(false)
+                    setIsNewProjectModalOpen(false)
                     fetchProjects() //refresh the list
+                }}
+            />
+
+            {/* Project Details Modal */}
+            <ProjectDetailsModal
+                isOpen={!!selectedProject}
+                onClose={() => setSelectedProject(null)}
+                project={selectedProject}
+                onRefresh={() => {
+                    fetchProjects();
+                    setSelectedProject(null);
                 }}
             />
         </div>
