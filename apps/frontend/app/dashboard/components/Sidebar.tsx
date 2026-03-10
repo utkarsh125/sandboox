@@ -8,7 +8,9 @@ import {
     User,
     Snowflake,
     SignOut,
-    CaretUp
+    CaretUp,
+    SignOutIcon,
+    SnowflakeIcon
 } from '@phosphor-icons/react'
 import { signOut } from '@sandboox/auth/client'
 
@@ -62,6 +64,16 @@ const Sidebar: React.FC = () => {
 
     return (
         <aside className="w-64 bg-white border-r border-gray-100 h-screen flex flex-col overflow-y-auto">
+            <style>{`
+                @keyframes dropdownSlide {
+                    from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .dropdown-anim {
+                    animation: dropdownSlide 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    transform-origin: top;
+                }
+            `}</style>
             {/* Logo */}
             <div className="p-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
@@ -108,12 +120,12 @@ const Sidebar: React.FC = () => {
 
                         {/* Dropdown */}
                         {accountOpen && (
-                            <div className="absolute bottom-full left-0 w-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
+                            <div className="dropdown-anim absolute top-full left-0 w-full mt-0 overflow-hidden z-10 p-1">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:text-red-500 transition-colors cursor-pointer"
                                 >
-                                    <SignOut size={16} weight="bold" />
+                                    <SignOutIcon size={16} weight="bold" />
                                     <span>Log out</span>
                                 </button>
                             </div>
@@ -125,7 +137,7 @@ const Sidebar: React.FC = () => {
             {/* Footer */}
             <div className="p-4 border-t border-gray-100">
                 <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <Snowflake size={14} />
+                    <SnowflakeIcon size={14} />
                     <span>SANDBOOX</span>
                 </div>
             </div>

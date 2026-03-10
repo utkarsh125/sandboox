@@ -5,12 +5,9 @@ import { NewProjectModal, ProjectsTable, ProjectDetailsModal } from '../componen
 import type { Project } from '../components/ProjectsTable'
 import axios from 'axios'
 
-
-
 const ProjectsPage = () => {
     const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -18,11 +15,8 @@ const ProjectsPage = () => {
         try {
             const { data } = await axios.get(
                 `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`,
-                {
-                    withCredentials: true
-                }
+                { withCredentials: true }
             )
-
             setProjects(data.projects)
         } catch (err) {
             console.error("Failed to fetch: ", err);
@@ -32,8 +26,14 @@ const ProjectsPage = () => {
     }
 
     useEffect(() => { fetchProjects() }, []);
+
     return (
-        <div className="p-8 space-y-6">
+
+        <div className="p-8 space-y-6 relative">
+
+            {/* Portal anchor — dropdown teleports here, sits above everything */}
+            <div id="dropdown-portal" className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999 }} />
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -51,12 +51,12 @@ const ProjectsPage = () => {
 
             {/* Projects Table */}
             {loading ? (
-                <div className='text-sm text-gray-400 text-center py-12'>
+                <div className="text-sm text-gray-400 text-center py-12">
                     Loading projects...
                 </div>
             ) : (
-                <ProjectsTable 
-                    projects={projects} 
+                <ProjectsTable
+                    projects={projects}
                     onRefresh={fetchProjects}
                     onProjectClick={(project) => setSelectedProject(project)}
                 />
@@ -67,7 +67,7 @@ const ProjectsPage = () => {
                 isOpen={isNewProjectModalOpen}
                 onClose={() => {
                     setIsNewProjectModalOpen(false)
-                    fetchProjects() //refresh the list
+                    fetchProjects()
                 }}
             />
 

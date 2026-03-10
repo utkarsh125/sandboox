@@ -1,6 +1,21 @@
 "use client"
-import React, { useState } from 'react';
-import { XIcon, InfoIcon, CheckCircleIcon, WarningCircleIcon, ClockIcon, FileArrowUpIcon, TrashIcon, PencilSimpleIcon, PlayIcon } from '@phosphor-icons/react';
+import React, { useState, useEffect } from 'react';
+import {
+    XIcon,
+    InfoIcon,
+    CheckCircleIcon,
+    WarningCircleIcon,
+    ClockIcon,
+    FileArrowUpIcon,
+    TrashIcon,
+    PencilSimpleIcon,
+    PlayIcon,
+    AndroidLogoIcon,
+    CalendarBlankIcon,
+    LinkSimpleIcon,
+    ArrowSquareOutIcon,
+    SpinnerGapIcon,
+} from '@phosphor-icons/react';
 import { Project } from './ProjectsTable';
 import axios from 'axios';
 import DeleteProjectModal from './DeleteProjectModal';
@@ -12,44 +27,112 @@ interface ProjectDetailsModalProps {
     onRefresh: () => void;
 }
 
-const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({ isOpen, onClose, project, onRefresh }) => {
+const statusConfig: Record<string, {
+    label: string;
+    detail: string;
+    colorClass: string;
+    pillClass: string;
+    dotClass: string;
+    icon: React.ElementType;
+}> = {
+    PENDING: {
+        label: 'Pending',
+        detail: 'Queued for processing',
+        colorClass: 'text-amber-600',
+        pillClass: 'bg-amber-50 border-amber-200 text-amber-700',
+        dotClass: 'bg-amber-400 animate-pulse',
+        icon: ClockIcon,
+    },
+    READY: {
+        label: 'Ready',
+        detail: 'GitHub URL verified, ready for analysis',
+        colorClass: 'text-blue-600',
+        pillClass: 'bg-blue-50 border-blue-200 text-blue-700',
+        dotClass: 'bg-blue-400',
+        icon: InfoIcon,
+    },
+    UPLOADED: {
+        label: 'Uploaded',
+        detail: 'File uploaded successfully',
+        colorClass: 'text-blue-600',
+        pillClass: 'bg-blue-50 border-blue-200 text-blue-700',
+        dotClass: 'bg-blue-400',
+        icon: FileArrowUpIcon,
+    },
+    PROCESSING: {
+        label: 'Processing',
+        detail: 'Analysis in progress',
+        colorClass: 'text-purple-600',
+        pillClass: 'bg-purple-50 border-purple-200 text-purple-700',
+        dotClass: 'bg-purple-500 animate-pulse',
+        icon: SpinnerGapIcon,
+    },
+    COMPLETED: {
+        label: 'Completed',
+        detail: 'Analysis finished successfully',
+        colorClass: 'text-emerald-600',
+        pillClass: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+        dotClass: 'bg-emerald-400',
+        icon: CheckCircleIcon,
+    },
+    FAILED: {
+        label: 'Failed',
+        detail: 'Analysis encountered an error',
+        colorClass: 'text-red-500',
+        pillClass: 'bg-red-50 border-red-200 text-red-600',
+        dotClass: 'bg-red-400',
+        icon: WarningCircleIcon,
+    },
+};
+
+const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
+    isOpen,
+    onClose,
+    project,
+    onRefresh,
+}) => {
     const [isRenaming, setIsRenaming] = useState(false);
     const [newName, setNewName] = useState('');
     const [loadingAction, setLoadingAction] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            // slight delay so CSS transition plays on mount
+            requestAnimationFrame(() => setMounted(true));
+        } else {
+            setMounted(false);
+        }
+    }, [isOpen]);
 
     if (!isOpen || !project) return null;
 
-    const apkStatus = project.apk?.status || 'UPLOADED'; // default if missing somehow
-
-    const statusConfig: Record<string, { label: string, detail: string, colorClass: string, icon: React.ElementType }> = {
-        PENDING: { label: 'Pending', detail: 'Queued for processing', colorClass: 'text-amber-600 bg-amber-50 border-amber-200', icon: ClockIcon },
-        READY: { label: 'Ready', detail: 'GitHub URL provided, ready for worker to fetch', colorClass: 'text-blue-600 bg-blue-50 border-blue-200', icon: InfoIcon },
-        UPLOADED: { label: 'Uploaded', detail: 'File uploaded successfully', colorClass: 'text-blue-600 bg-blue-50 border-blue-200', icon: FileArrowUpIcon },
-        PROCESSING: { label: 'Processing', detail: 'Analysis in progress', colorClass: 'text-purple-600 bg-purple-50 border-purple-200', icon: ClockIcon },
-        COMPLETED: { label: 'Completed', detail: 'Analysis done', colorClass: 'text-green-600 bg-green-50 border-green-200', icon: CheckCircleIcon },
-        FAILED: { label: 'Failed', detail: 'Analysis failed', colorClass: 'text-red-500 bg-red-50 border-red-200', icon: WarningCircleIcon },
-    };
-
-    const currentStatusConfig = statusConfig[apkStatus] || statusConfig['UPLOADED'];
-    const StatusIcon = currentStatusConfig.icon;
-
+    const apkStatus = project.apk?.status || 'UPLOADED';
+    const cfg = statusConfig[apkStatus] || statusConfig['UPLOADED'];
+    const StatusIcon = cfg.icon;
     const isProcessDone = apkStatus === 'COMPLETED' || apkStatus === 'FAILED' || apkStatus === 'PROCESSING';
+
+    const formatDate = (dateStr: string) => {
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+    };
 
     const handleRename = async () => {
         if (!newName.trim() || newName === project.name) {
             setIsRenaming(false);
             return;
         }
-
         setLoadingAction('rename');
         setError(null);
         try {
-            await axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${project.id}`, {
-                name: newName.trim()
-            }, { withCredentials: true });
-
+            await axios.patch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${project.id}`,
+                { name: newName.trim() },
+                { withCredentials: true }
+            );
             setIsRenaming(false);
             onRefresh();
         } catch (err: any) {
@@ -59,12 +142,9 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({ isOpen, onClo
         }
     };
 
-    const handleDeleteClick = () => {
-        setIsDeleteDialogOpen(true);
-    };
-
     const confirmDelete = async () => {
-        await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${project.id}`,
+        await axios.delete(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${project.id}`,
             { withCredentials: true }
         );
         onClose();
@@ -73,14 +153,14 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({ isOpen, onClo
 
     const handleStart = async () => {
         if (isProcessDone) return;
-
         setLoadingAction('start');
         setError(null);
         try {
-            await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${project.id}/start`,
-                {}, { withCredentials: true }
+            await axios.post(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${project.id}/start`,
+                {},
+                { withCredentials: true }
             );
-
             onRefresh();
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to start analysis');
@@ -90,136 +170,251 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({ isOpen, onClo
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-xl font-semibold text-gray-900">Project Details</h2>
-                    <button
-                        onClick={onClose}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                        <XIcon size={20} weight="bold" />
-                    </button>
-                </div>
+        <>
+            <style>{`
+                @keyframes modalBackdropIn {
+                    from { opacity: 0; }
+                    to   { opacity: 1; }
+                }
+                @keyframes modalSlideUp {
+                    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0)   scale(1); }
+                }
+                @keyframes rowFadeIn {
+                    from { opacity: 0; transform: translateX(-8px); }
+                    to   { opacity: 1; transform: translateX(0); }
+                }
+                @keyframes spinSlow {
+                    from { transform: rotate(0deg); }
+                    to   { transform: rotate(360deg); }
+                }
+                .modal-backdrop { animation: modalBackdropIn 0.2s ease forwards; }
+                .modal-panel    { animation: modalSlideUp 0.25s cubic-bezier(0.16,1,0.3,1) forwards; }
+                .row-1 { animation: rowFadeIn 0.3s ease 0.05s both; }
+                .row-2 { animation: rowFadeIn 0.3s ease 0.12s both; }
+                .row-3 { animation: rowFadeIn 0.3s ease 0.19s both; }
+                .row-4 { animation: rowFadeIn 0.3s ease 0.26s both; }
+                .row-5 { animation: rowFadeIn 0.3s ease 0.33s both; }
+                .spin-slow { animation: spinSlow 1.2s linear infinite; }
+                .action-btn {
+                    position: relative;
+                    overflow: hidden;
+                    transition: transform 0.15s ease, box-shadow 0.15s ease;
+                }
+                .action-btn:not(:disabled):hover {
+                    transform: translateY(-1px);
+                }
+                .action-btn:not(:disabled):active {
+                    transform: translateY(0px);
+                }
+                .action-btn::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: white;
+                    opacity: 0;
+                    transition: opacity 0.15s ease;
+                }
+                .action-btn:not(:disabled):hover::after { opacity: 0.08; }
+                .action-btn:not(:disabled):active::after { opacity: 0.18; }
+            `}</style>
 
-                {/* Body */}
-                <div className="p-6 space-y-6">
-                    {error && (
-                        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2">
-                            <WarningCircleIcon size={16} />
-                            {error}
-                        </div>
-                    )}
+            {/* Backdrop */}
+            <div
+                className="modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-950/60 backdrop-blur-sm p-0 sm:p-4"
+                onClick={(e) => e.target === e.currentTarget && onClose()}
+            >
+                {/* Panel */}
+                <div className="modal-panel bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]">
 
-                    <div className="space-y-4">
-                        {/* Name */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-500 mb-1 block">Project Name</label>
-                            {isRenaming ? (
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="text"
-                                        value={newName}
-                                        onChange={(e) => setNewName(e.target.value)}
-                                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
-                                        autoFocus
-                                        disabled={loadingAction === 'rename'}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                                    />
-                                    <button
-                                        onClick={handleRename}
-                                        disabled={loadingAction === 'rename'}
-                                        className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
-                                    >
-                                        Save
-                                    </button>
-                                    <button
-                                        onClick={() => setIsRenaming(false)}
-                                        disabled={loadingAction === 'rename'}
-                                        className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium disabled:opacity-50"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2 group">
-                                    <p className="text-lg font-medium text-gray-900">{project.name}</p>
-                                    <button
-                                        onClick={() => {
-                                            setNewName(project.name);
-                                            setIsRenaming(true);
-                                        }}
-                                        className="p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600 transition-all rounded hover:bg-gray-100"
-                                    >
-                                        <PencilSimpleIcon size={16} />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Description */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-500 mb-1 block">Description</label>
-                            {project.description && project.description !== "null" ? (
-                                <p className="text-gray-900">{project.description}</p>
-                            ) : (
-                                <p className="text-gray-500 italic">No description provided</p>
-                            )}
-                        </div>
-
-                        {/* Status with hover */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-500 mb-1 block">Status</label>
-                            <div className="relative inline-flex items-center group">
-                                <span className={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${currentStatusConfig.colorClass}`}>
-                                    <StatusIcon size={16} weight="bold" />
-                                    {currentStatusConfig.label}
-                                </span>
-
-                                {/* Tooltip */}
-                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-xs z-10 pointer-events-none animate-in fade-in slide-in-from-bottom-1 border border-gray-200 shadow-lg bg-gray-900 text-white text-xs rounded-lg py-2 px-3">
-                                    {currentStatusConfig.detail}
-                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                                </div>
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-5 py-4">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-green-100 border-1 border-green-500 flex items-center justify-center">
+                                <AndroidLogoIcon size={18} weight="duotone" className="text-green-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">APK Project</p>
+                                <h2 className="text-base font-semibold text-gray-900 leading-tight">Project Details</h2>
                             </div>
                         </div>
+                        <button
+                            onClick={onClose}
+                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            <XIcon size={18} weight="bold" />
+                        </button>
                     </div>
-                </div>
 
-                {/* Footer / Actions */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center gap-3">
-                    <button
-                        onClick={handleStart}
-                        disabled={isProcessDone || loadingAction === 'start'}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isProcessDone
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'
-                            } ${loadingAction === 'start' ? 'opacity-70' : ''}`}
-                    >
-                        <PlayIcon size={16} weight="bold" />
-                        {loadingAction === 'start' ? 'Starting...' : 'Start'}
-                    </button>
+                    {/* Scrollable body */}
+                    <div className="flex-1 overflow-y-auto">
+                        <div className="p-5 space-y-1">
 
-                    <button
-                        onClick={() => {
-                            setNewName(project.name);
-                            setIsRenaming(true);
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-                    >
-                        <PencilSimpleIcon size={16} />
-                        Rename
-                    </button>
+                            {/* Error */}
+                            {error && (
+                                <div className="flex items-start gap-2.5 p-3 mb-3 text-sm text-red-700 bg-red-50 rounded-xl border border-red-200">
+                                    <WarningCircleIcon size={16} className="mt-0.5 shrink-0 text-red-500" />
+                                    {error}
+                                </div>
+                            )}
 
-                    <button
-                        onClick={handleDeleteClick}
-                        disabled={loadingAction === 'delete'}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-red-200 bg-white text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors ${loadingAction === 'delete' ? 'opacity-70' : ''}`}
-                    >
-                        <TrashIcon size={16} />
-                        {loadingAction === 'delete' ? 'Deleting...' : 'Delete'}
-                    </button>
+                            {/* Project Name row */}
+                            <div className="row-1 group flex items-start gap-3 py-3.5 border-b border-gray-50">
+                                <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                                    <PencilSimpleIcon size={15} className="text-gray-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-400 mb-1">Project Name</p>
+                                    {isRenaming ? (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={newName}
+                                                onChange={(e) => setNewName(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                                                autoFocus
+                                                disabled={loadingAction === 'rename'}
+                                                className="flex-1 min-w-0 px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                                            />
+                                            <button
+                                                onClick={handleRename}
+                                                disabled={loadingAction === 'rename'}
+                                                className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                                            >
+                                                {loadingAction === 'rename' ? 'Saving…' : 'Save'}
+                                            </button>
+                                            <button
+                                                onClick={() => setIsRenaming(false)}
+                                                className="px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 rounded-lg text-xs font-medium transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5">
+                                            <p className="text-sm font-semibold text-gray-900 truncate">{project.name}</p>
+                                            <button
+                                                onClick={() => { setNewName(project.name); setIsRenaming(true); }}
+                                                className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-all"
+                                            >
+                                                <PencilSimpleIcon size={13} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Description row */}
+                            <div className="row-2 flex items-start gap-3 py-3.5 border-b border-gray-50">
+                                <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                                    <InfoIcon size={15} className="text-gray-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-400 mb-1">Description</p>
+                                    {project.description && project.description !== 'null' ? (
+                                        <p className="text-sm text-gray-700 leading-relaxed">{project.description}</p>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">No description provided</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Status row */}
+                            <div className="row-3 flex items-start gap-3 py-3.5 border-b border-gray-50">
+                                <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                                    <span className={`w-2.5 h-2.5 rounded-full ${cfg.dotClass}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-400 mb-1.5">Status</p>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.pillClass}`}>
+                                            <StatusIcon
+                                                size={13}
+                                                weight="bold"
+                                                className={apkStatus === 'PROCESSING' ? 'spin-slow' : ''}
+                                            />
+                                            {cfg.label}
+                                        </span>
+                                        <span className="text-xs text-gray-400">{cfg.detail}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* APK Source row */}
+                            {project.apk?.sourceUrl && (
+                                <div className="row-4 flex items-start gap-3 py-3.5 border-b border-gray-50">
+                                    <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <LinkSimpleIcon size={15} className="text-gray-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-medium text-gray-400 mb-1">Source URL</p>
+                                        <a
+                                            href={project.apk.sourceUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 font-mono bg-gray-50 border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors max-w-full truncate group/link"
+                                        >
+                                            <span className="truncate">{project.apk.sourceUrl.replace('https://github.com/', '')}</span>
+                                            <ArrowSquareOutIcon size={11} className="shrink-0 opacity-50 group-hover/link:opacity-100 transition-opacity" />
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Created at row */}
+                            {project.createdAt && (
+                                <div className="row-5 flex items-start gap-3 py-3.5">
+                                    <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <CalendarBlankIcon size={15} className="text-gray-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-medium text-gray-400 mb-1">Created</p>
+                                        <p className="text-sm text-gray-700">{formatDate(project.createdAt)}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Footer actions */}
+                    <div className="px-5 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center gap-2.5">
+                        {/* Start */}
+                        <button
+                            onClick={handleStart}
+                            disabled={isProcessDone || loadingAction === 'start'}
+                            className={`action-btn flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+                                ${isProcessDone
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'bg-gray-900 text-white shadow-sm hover:bg-gray-800'
+                                } ${loadingAction === 'start' ? 'opacity-70' : ''}`}
+                        >
+                            {loadingAction === 'start' ? (
+                                <SpinnerGapIcon size={15} className="spin-slow" />
+                            ) : (
+                                <PlayIcon size={15} weight="fill" />
+                            )}
+                            {loadingAction === 'start' ? 'Starting…' : 'Run Analysis'}
+                        </button>
+
+                        {/* Rename */}
+                        <button
+                            onClick={() => { setNewName(project.name); setIsRenaming(true); }}
+                            className="action-btn flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+                        >
+                            <PencilSimpleIcon size={15} />
+                            Rename
+                        </button>
+
+                        {/* Delete */}
+                        <button
+                            onClick={() => setIsDeleteDialogOpen(true)}
+                            disabled={loadingAction === 'delete'}
+                            className={`action-btn flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 border border-red-200 bg-white text-red-600 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors ${loadingAction === 'delete' ? 'opacity-70' : ''}`}
+                        >
+                            <TrashIcon size={15} />
+                            Delete
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -229,7 +424,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({ isOpen, onClo
                 onConfirm={confirmDelete}
                 projectName={project.name}
             />
-        </div>
+        </>
     );
 };
 
