@@ -2,7 +2,6 @@
 import React from 'react';
 import { getSession } from "@/lib/sessions";
 import {
-    StatCard,
     LineChart,
     BarChart,
     DonutChart,

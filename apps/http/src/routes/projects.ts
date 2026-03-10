@@ -2,6 +2,7 @@ import { prisma } from "@sandboox/db";
 import { Hono } from "hono";
 import { Variables } from "../types";
 import { apkAnalysisQueue } from "../lib/queue";
+import { validateGithubApkUrl } from "../lib/github";
 export const projectRoutes = new Hono<{ Variables: Variables }>();
 
 //create a project
@@ -24,6 +25,15 @@ projectRoutes.post("/", async (c) => {
         }, 400)
     };
 
+    if (sourceUrl) {
+        const validation = await validateGithubApkUrl(sourceUrl);
+        if (!validation.valid) {
+            return c.json({
+                error: validation.error
+            }, 400)
+        }
+    }
+
     const project = await prisma.project.create({
         data: {
             name,
@@ -41,7 +51,7 @@ projectRoutes.post("/", async (c) => {
                 projectId: project.id,
                 sourceUrl: sourceUrl,
                 fileName: fileName || null,
-                status: sourceUrl.includes("github.com") ? "READY" : "UPLOADED"
+                status: "READY" //as the github url is already validated
             }
         })
     }

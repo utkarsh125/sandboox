@@ -12,7 +12,9 @@ import {
     GithubLogoIcon,
     UploadSimpleIcon,
     LinkIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    WarningCircleIcon,
+    SpinnerIcon,
 } from '@phosphor-icons/react'
 import axios from 'axios'
 
@@ -30,6 +32,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [sourceUrl, setSourceUrl] = useState('')
+    const [error, setError] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
 
     const isGithubUrl = sourceUrl.startsWith('https://github.com/')
     const githubPath = isGithubUrl ? sourceUrl.replace('https://github.com/', '') : ''
@@ -40,6 +44,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
         setName('')
         setDescription('')
         setSourceUrl('')
+        setError(null)
+        setIsLoading(false)
         onClose()
     }
 
@@ -51,9 +57,12 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
     const handleBack = () => {
         setStep('select')
         setTestType(null)
+        setError(null)
     }
 
     const handleCreate = async () => {
+        setError(null)
+        setIsLoading(true)
         try {
             const { data } = await axios.post(
                 `/api/projects`,
@@ -64,14 +73,15 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                     sourceUrl: sourceUrl || undefined,
                     fileName: isGithubUrl ? sourceUrl.split('/').pop() : undefined
                 },
-                {
-                    withCredentials: true
-                }
+                { withCredentials: true }
             )
             console.log("Project created:", data)
             handleClose()
-        } catch (err) {
-            console.error("Failed to create project:", err)
+        } catch (err: any) {
+            const message = err.response?.data?.error || "Failed to create project. Please try again."
+            setError(message)
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -121,7 +131,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                 {step === 'select' && (
                     <>
                         <div className="p-6 space-y-3">
-                            {/* APK Testing – Active */}
+                            {/* APK Testing */}
                             <button
                                 onClick={handleSelectApk}
                                 className="w-full group flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all cursor-pointer"
@@ -140,7 +150,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                 </div>
                             </button>
 
-                            {/* Website Testing – Blocked */}
+                            {/* Website Testing – Locked */}
                             <div className="relative group">
                                 <button
                                     disabled
@@ -160,8 +170,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                         Locked
                                     </div>
                                 </button>
-
-                                {/* Tooltip on hover */}
                                 <div className="absolute -top-9 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg">
                                     Coming Soon
                                     <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-gray-900"></div>
@@ -169,7 +177,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                             </div>
                         </div>
 
-                        {/* Footer */}
                         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
                             <p className="text-xs text-gray-400 text-center">
                                 More testing options will be available soon
@@ -187,6 +194,14 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                 <AndroidLogoIcon size={18} weight="duotone" className="text-green-600" />
                                 <span className="text-xs font-medium text-green-700">APK Testing</span>
                             </div>
+
+                            {/* Global error banner — shown when backend rejects the request */}
+                            {error && (
+                                <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-red-50 border border-red-200">
+                                    <WarningCircleIcon size={16} weight="fill" className="text-red-500 mt-0.5 shrink-0" />
+                                    <p className="text-xs text-red-700 leading-relaxed">{error}</p>
+                                </div>
+                            )}
 
                             {/* Name field */}
                             <div className="space-y-1.5">
@@ -225,7 +240,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                     APK Source
                                 </label>
 
-                                {/* GitHub URL Input */}
                                 <div className="space-y-2">
                                     <div className="relative">
                                         {isGithubUrl ? (
@@ -235,7 +249,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                                 <span className="text-gray-700 truncate flex-1 font-mono text-xs">{githubPath}</span>
                                                 <CheckCircleIcon size={18} weight="fill" className="text-green-500 shrink-0" />
                                                 <button
-                                                    onClick={() => setSourceUrl('')}
+                                                    onClick={() => { setSourceUrl(''); setError(null); }}
                                                     className="p-0.5 hover:bg-green-100 rounded transition-colors cursor-pointer"
                                                 >
                                                     <XIcon size={14} className="text-gray-400" />
@@ -245,21 +259,24 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                                             <input
                                                 type="text"
                                                 value={sourceUrl}
-                                                onChange={(e) => setSourceUrl(e.target.value)}
-                                                placeholder="https://github.com/user/repo/tree/main/app.apk"
+                                                onChange={(e) => { setSourceUrl(e.target.value); setError(null); }}
+                                                placeholder="https://github.com/user/repo/blob/main/app.apk"
                                                 className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-white placeholder:text-gray-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-50 transition-all"
                                             />
                                         )}
                                     </div>
+
+                                    {/* Inline URL hints */}
                                     {sourceUrl && !isGithubUrl && (
                                         <p className="text-xs text-amber-600 flex items-center gap-1">
+                                            <WarningCircleIcon size={12} weight="fill" />
                                             URL must start with https://github.com/
                                         </p>
                                     )}
-                                    {isGithubUrl && (
+                                    {isGithubUrl && !error && (
                                         <p className="text-xs text-green-600 flex items-center gap-1">
                                             <CheckCircleIcon size={12} weight="bold" />
-                                            GitHub URL detected — project will be created with status READY
+                                            GitHub URL detected — file will be verified on submit
                                         </p>
                                     )}
                                 </div>
@@ -292,7 +309,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                             </div>
                         </div>
 
-                        {/* Footer with create button */}
+                        {/* Footer */}
                         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
                             <button
                                 onClick={handleClose}
@@ -302,11 +319,20 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose }) =>
                             </button>
                             <button
                                 onClick={handleCreate}
-                                disabled={!name.trim() || !isGithubUrl}
+                                disabled={!name.trim() || !isGithubUrl || isLoading}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors cursor-pointer shadow-sm"
                             >
-                                <RocketIcon size={16} weight="bold" />
-                                Create Project
+                                {isLoading ? (
+                                    <>
+                                        <SpinnerIcon size={16} className="animate-spin" />
+                                        Verifying...
+                                    </>
+                                ) : (
+                                    <>
+                                        <RocketIcon size={16} weight="bold" />
+                                        Create Project
+                                    </>
+                                )}
                             </button>
                         </div>
                     </>
