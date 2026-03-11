@@ -52,7 +52,7 @@ Make sure you have the following installed:
 
 ### 1. Clone the Repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/utkarsh125/sandboox
 cd sandboox
 ```
 
