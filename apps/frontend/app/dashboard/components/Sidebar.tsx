@@ -3,14 +3,12 @@ import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-    House,
-    FolderSimple,
-    User,
-    Snowflake,
-    SignOut,
-    CaretUp,
     SignOutIcon,
-    SnowflakeIcon
+    SnowflakeIcon,
+    CaretUpIcon,
+    UserIcon,
+    HouseIcon,
+    FolderSimpleIcon
 } from '@phosphor-icons/react'
 import { signOut } from '@sandboox/auth/client'
 
@@ -78,7 +76,7 @@ const Sidebar: React.FC = () => {
             <div className="p-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                        <Snowflake size={18} weight="bold" className="text-white" />
+                        <SnowflakeIcon size={18} weight="bold" className="text-white" />
                     </div>
                     <span className="font-semibold text-gray-900">Sandboox</span>
                 </div>
@@ -92,8 +90,8 @@ const Sidebar: React.FC = () => {
                         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Overview</span>
                     </div>
                     <div className="space-y-0.5">
-                        <NavItem icon={<House size={18} />} label="Overview" href="/dashboard" isActive={pathname === '/dashboard'} />
-                        <NavItem icon={<FolderSimple size={18} />} label="Projects" href="/dashboard/projects" isActive={pathname === '/dashboard/projects'} />
+                        <NavItem icon={<HouseIcon size={18} />} label="Overview" href="/dashboard" isActive={pathname === '/dashboard'} />
+                        <NavItem icon={<FolderSimpleIcon size={18} />} label="Projects" href="/dashboard/projects" isActive={pathname === '/dashboard/projects'} />
                     </div>
                 </div>
 
@@ -109,10 +107,10 @@ const Sidebar: React.FC = () => {
                                 }`}
                         >
                             <span className="w-5 h-5 flex items-center justify-center">
-                                <User size={18} />
+                                <UserIcon size={18} />
                             </span>
                             <span className="flex-1 text-left">Account</span>
-                            <CaretUp
+                            <CaretUpIcon
                                 size={14}
                                 className={`text-gray-400 transition-transform ${accountOpen ? '' : 'rotate-180'}`}
                             />
