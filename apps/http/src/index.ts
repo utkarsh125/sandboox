@@ -14,6 +14,7 @@ import { authRoutes } from "./routes/auth";
 import { analyzeRoutes } from "./routes/analyze";
 import { sessionMiddleware } from "./middleware/auth";
 import { projectRoutes } from "./routes/projects";
+import { explainRoutes } from './routes/gemini';
 
 // init hono app instance with typed context
 const app = new Hono<{ Variables: Variables }>();
@@ -59,6 +60,9 @@ app.route("/api/analyze", analyzeRoutes);
 //Project Routes (create, list)
 //mounted at /api/projects
 app.route("/api/projects", projectRoutes);
+
+//Gemini Route
+app.route("/api/explain", explainRoutes);
 
 // health check
 app.get('/', (c) => {
