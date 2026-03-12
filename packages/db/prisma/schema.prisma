@@ -83,14 +83,15 @@ model Analysis {
   vulnerabilities Json? // Store vulnerability array
   permissions     Json? // Store permissions array
   securityScore   Float? // 0-100 score
+  grade           String? // A-F letter grade (computed by scoring.ts)
+  scoreBreakdown  Json? // Array of { reason, points, category } deductions
   decompiled      Boolean   @default(false)
   decompiledPath  String?
   manifestData    Json?
   startedAt       DateTime  @default(now())
   completedAt     DateTime?
   errorMessage    String?
-
-  apk Apk @relation(fields: [apkId], references: [id], onDelete: Cascade)
+  apk             Apk       @relation(fields: [apkId], references: [id], onDelete: Cascade)
 }
 
 model Project {

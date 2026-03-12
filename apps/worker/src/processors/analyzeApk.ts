@@ -2,6 +2,10 @@ import { Job } from "bullmq";
 import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
+import { prisma } from "@sandboox/db";
+import { parseManifest } from "./manifest";
+import { runSemgrep } from "./semgrep";
+import { computeSecurityScore } from "./scoring";
 
 const STORAGE = "/tmp/sandboox";
 
@@ -9,7 +13,7 @@ export async function analyzeProcessor(job: Job) {
 
   const { apkId, githubUrl } = job.data;
 
-  console.log("Processing APK: ", apkId);
+  console.log("[WORKER]Processing APK: ", apkId);
 
   const dir = path.join(STORAGE, apkId);
 
@@ -20,12 +24,120 @@ export async function analyzeProcessor(job: Job) {
 
   const apkPath = path.join(dir, "app.apk");
 
-  await download(githubUrl, apkPath);
-  await runJadx(apkPath, dir);
-  await runApktool(apkPath, dir);
-  return true;
+  try {
+
+
+    //mark as processing
+    await prisma.apk.update({
+      where: {
+        id: apkId,
+      },
+      data: {
+        status: "PROCESSING"
+      }
+    });
+
+    //download + decomplile 
+    await download(githubUrl, apkPath);
+    await runJadx(apkPath, dir);
+    await runApktool(apkPath, dir);
+
+
+    //parse manifest
+    const manifest = await parseManifest(dir);
+    console.log(`[WORKER]Package: ${manifest.packageName}, Permissions: ${manifest.permissions.length}`);
+
+    //run semgrep
+    const findings = runSemgrep(dir);
+    console.log(`[WORKER] Found ${findings.length} issues`);
+
+    //Score
+    const scoreResult = computeSecurityScore(findings, manifest);
+    console.log(`[WORKER]Score: ${scoreResult.totalScore}/100 (${scoreResult.grade})`);
+
+    //store in db
+    await prisma.analysis.create({
+      data: {
+        apkId,
+        vulnerabilities: findings as any,
+        permissions: manifest.permissions as any,
+        manifestData: {
+          packageName: manifest.packageName,
+          versionName: manifest.versionName,
+          versionCode: manifest.versionCode,
+          minSdkVersion: manifest.minSdkVersion,
+          targetSdkVersion: manifest.targetSdkVersion,
+          exportedComponents: manifest.exportedComponents,
+          debuggable: manifest.debuggable,
+          allowBackup: manifest.allowBackup,
+          usesCleartextTraffic: manifest.usesCleartextTraffic,
+          networkSecurityConfig: manifest.networkSecurityConfig,
+        } as any,
+        securityScore: scoreResult.totalScore,
+        decompiled: true,
+        decompiledPath: dir,
+        completedAt: new Date(),
+      }
+    })
+
+
+    await prisma.apk.update({
+      where: {
+        id: apkId,
+      },
+      data: {
+        status: "COMPLETED",
+        packageName: manifest.packageName,
+        versionName: manifest.versionName,
+        versionCode: manifest.versionCode,
+        minSdkVersion: manifest.minSdkVersion,
+        targetSdkVersion: manifest.targetSdkVersion,
+      }
+    });
+
+    console.log(`[WORKER] APK ${apkId} completed - SCORE: ${scoreResult.totalScore} (${scoreResult.grade})`);
+    return {
+      score: scoreResult.totalScore,
+      grade: scoreResult.grade,
+      findingsCount: findings.length
+    }
+  } catch (err: any) {
+
+    console.error(`[WORKER]Failed for ${apkId}: `, err.message);
+
+    try {
+
+
+      await prisma.apk.update({
+        where: {
+          id: apkId,
+        },
+        data: {
+          status: "FAILED"
+        }
+      });
+
+
+      await prisma.analysis.upsert({
+        where: { apkId },
+        create: {
+          apkId,
+          errorMessage: err.message,
+          decompiled: false
+        },
+        update: {
+          errorMessage: err.message
+        },
+      });
+    } catch (dbError) {
+      console.error(`[WORKER]DB Error update failed: `, dbError);
+    }
+    throw err;
+  }
 }
 
+
+//helper functions
 async function download(url: string, output: string) {
 
   const res = await fetch(url);
