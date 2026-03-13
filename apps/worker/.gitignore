@@ -1,0 +1,22 @@
+# Compiled output (if compiling directly in src)
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
+
+# Directories
+dist/
+out/
+build/
+node_modules/
+
+# Env files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Misc
+.DS_Store
+*.log
