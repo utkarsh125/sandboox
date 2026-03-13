@@ -11,7 +11,10 @@ const connection = new Redis(
 export const worker = new Worker(
     QUEUE_NAMES.APK_ANALYSIS,
     analyzeProcessor,
-    { connection }
+    {
+        connection,
+        lockDuration: 600000 // 10 minutes (because jadx and apktool take time)
+    }
 );
 
 worker.on("completed", (job) => {

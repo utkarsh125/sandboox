@@ -50,7 +50,7 @@ reportRoutes.get("/:projectId", async (c) => {
     const analysis = project.apk.analysis;
     const vulns = (analysis.vulnerabilities as any[]) || [];
     const permissions = (analysis.permissions as any[]) || [];
-    const manifest = (analysis.manifestData as any[]) || [];
+    const manifest = (analysis.manifestData as any) || {};
     const deductions = (analysis.scoreBreakdown as any[]) || [];
 
 

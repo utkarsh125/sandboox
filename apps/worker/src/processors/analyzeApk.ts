@@ -54,7 +54,9 @@ export async function analyzeProcessor(job: Job) {
     //Score
     const scoreResult = computeSecurityScore(findings, manifest);
     console.log(`[WORKER]Score: ${scoreResult.totalScore}/100 (${scoreResult.grade})`);
-
+    console.log(`[WORKER] Score Breakdown: ${JSON.stringify(scoreResult.deductions)}`);
+    console.log(`[WORKER] Findings: ${JSON.stringify(findings)}`)
+    console.log(`[WORKER] Manifest: ${JSON.stringify(manifest)}`);
     //store in db
     await prisma.analysis.create({
       data: {
@@ -74,6 +76,8 @@ export async function analyzeProcessor(job: Job) {
           networkSecurityConfig: manifest.networkSecurityConfig,
         } as any,
         securityScore: scoreResult.totalScore,
+        grade: scoreResult.grade,
+        scoreBreakdown: scoreResult.deductions as any,
         decompiled: true,
         decompiledPath: dir,
         completedAt: new Date(),
@@ -140,8 +144,18 @@ export async function analyzeProcessor(job: Job) {
 //helper functions
 async function download(url: string, output: string) {
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+  let finalUrl = url;
+  // Convert standard github blob URL to raw URL so we get the APK binary, not the HTML page
+  // Example: https://github.com/user/repo/blob/master/app.apk -> https://github.com/user/repo/raw/master/app.apk
+  if (finalUrl.includes("github.com") && finalUrl.includes("/blob/")) {
+    finalUrl = finalUrl.replace("/blob/", "/raw/");
+  } else if (finalUrl.includes("github.com") && !finalUrl.includes("/raw/") && !finalUrl.includes("raw.githubusercontent.com")) {
+      // Just in case it's a direct link to a file without blob but not raw
+      finalUrl = finalUrl.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/");
+  }
+
+  const res = await fetch(finalUrl, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`Download failed: ${res.status} for ${finalUrl}`);
 
   const { Readable } = await import("stream");
   const nodeStream = Readable.fromWeb(res.body! as any);
@@ -155,34 +169,26 @@ async function download(url: string, output: string) {
 }
 
 function runJadx(apk: string, dir: string) {
-
   return new Promise((resolve, reject) => {
+    const proc = spawn("jadx", ["-d", `${dir}/jadx`, apk]);
 
-    const proc = spawn("jadx", [
-      "-d",
-      `${dir}/jadx`,
-      apk
-    ]);
-
-    proc.on("close", resolve);
+    proc.on("close", (code) => {
+      // jadx exit codes: 0 (success), 3 (errors in some classes), 4 (warnings)
+      if (code === 0 || code === 3 || code === 4) resolve(true);
+      else reject(new Error(`jadx exited with code ${code}`));
+    });
     proc.on("error", reject);
-
   });
 }
 
 function runApktool(apk: string, dir: string) {
-
   return new Promise((resolve, reject) => {
+    const proc = spawn("apktool", ["d", apk, "-o", `${dir}/apktool`, "-f"]);
 
-    const proc = spawn("apktool", [
-      "d",
-      apk,
-      "-o",
-      `${dir}/apktool`
-    ]);
-
-    proc.on("close", resolve);
+    proc.on("close", (code) => {
+      if (code === 0) resolve(true);
+      else reject(new Error(`apktool exited with code ${code}`));
+    });
     proc.on("error", reject);
-
   });
 }

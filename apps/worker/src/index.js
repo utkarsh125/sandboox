@@ -1,5 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
-require("./worker");
+import 'dotenv/config';
+import "./worker";
 console.log("Sandboox Worker Running...");
+//# sourceMappingURL=index.js.map

@@ -38,7 +38,6 @@ export function runSemgrep(decompDir: string): SemgrepFinding[] {
                 "semgrep", "scan",
                 "--config=auto",
                 "--json",
-                "--no-git",
                 "--timeout", "300",
                 "--max-target-bytes", "5000000",
                 jadxDir,
