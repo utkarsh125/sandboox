@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
+    "@react-pdf/renderer": "^4.3.2",
     "@sandboox/auth": "workspace:*",
     "@sandboox/db": "workspace:*",
     "@sandboox/shared-types": "workspace:*",

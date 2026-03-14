@@ -18,9 +18,13 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
   XCircleIcon,
+  DownloadIcon,
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react"
 import axios from "axios"
+
+import { PDFDownloadLink } from "@react-pdf/renderer"
+import { SecurityReportPDF } from "@/app/dashboard/components/ReportPDF"
 
 // ─── Types ───────────────────────────────────────────────────────────
 interface ReportData {
@@ -134,30 +138,46 @@ export default function ReportPage() {
       <div className="max-w-[1400px] mx-auto p-8 space-y-8 animate-in fade-in duration-500">
 
         {/* Header Section */}
-        <div className="flex items-center gap-6">
-          <button
-            onClick={() => router.push("/dashboard/projects")}
-            className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all shadow-sm"
-          >
-            <ArrowLeftIcon size={20} weight="bold" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {report.project.name}
-            </h1>
-            <p className="text-sm font-medium text-slate-500 flex items-center gap-2 mt-1">
-              <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-slate-600">
-                {report.apk.packageName || "Unknown"}
-              </code>
-              {report.apk.versionName && <span>· v{report.apk.versionName}</span>}
-              {report.completedAt && (
-                <span>
-                  · Analyzed on {new Date(report.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
-              )}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => router.push("/dashboard/projects")}
+              className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all shadow-sm"
+            >
+              <ArrowLeftIcon size={20} weight="bold" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                {report.project.name}
+              </h1>
+              <p className="text-sm font-medium text-slate-500 flex items-center gap-2 mt-1">
+                <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-slate-600">
+                  {report.apk.packageName || "Unknown"}
+                </code>
+                {report.apk.versionName && <span>· v{report.apk.versionName}</span>}
+                {report.completedAt && (
+                  <span>
+                    · Analyzed on {new Date(report.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
+
+          <PDFDownloadLink
+            document={<SecurityReportPDF data={report} />}
+            fileName={`${report.project.name}_Security_Report.pdf`}
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 cursor-pointer"
+          >
+            {({ loading }) => (
+              <>
+                <DownloadIcon size={20} weight="bold" />
+                {loading ? "Preparing PDF..." : "Export PDF"}
+              </>
+            )}
+          </PDFDownloadLink>
         </div>
+
 
         {/* Top Grid: Overview Stats & Recent Event Summary */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

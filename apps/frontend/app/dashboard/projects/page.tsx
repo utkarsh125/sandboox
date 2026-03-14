@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from 'react'
-import { Plus } from '@phosphor-icons/react'
+import { PlusIcon } from '@phosphor-icons/react'
 import { NewProjectModal, ProjectsTable, ProjectDetailsModal } from '../components'
 import type { Project } from '../components/ProjectsTable'
 import axios from 'axios'
@@ -63,9 +63,9 @@ const ProjectsPage = () => {
                 </div>
                 <button
                     onClick={() => setIsNewProjectModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 text-white px-3.5 py-2 text-sm font-medium cursor-pointer rounded-lg transition-colors shadow-sm"
+                    className="inline-flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 shadow-2xl shadow-blue-400 text-white px-3.5 py-2 text-sm font-medium cursor-pointer rounded-xl transition-colors shadow-sm"
                 >
-                    <Plus size={16} weight="bold" />
+                    <PlusIcon size={16} weight="bold" />
                     New Project
                 </button>
             </div>
