@@ -11,7 +11,7 @@ const ProjectsPage = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchProjects = async () => {
+    const fetchProjects = React.useCallback(async () => {
         try {
             const { data } = await axios.get(
                 `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`,
@@ -23,9 +23,30 @@ const ProjectsPage = () => {
         } finally {
             setLoading(false);
         }
-    }
+    }, [])
 
-    useEffect(() => { fetchProjects() }, []);
+    const projectsRef = React.useRef(projects);
+    useEffect(() => {
+        projectsRef.current = projects;
+    }, [projects]);
+
+    useEffect(() => {
+        fetchProjects();
+
+        // Poll every 5 seconds if any project is PENDING or PROCESSING
+        const interval = setInterval(() => {
+            const hasActiveProjects = projectsRef.current.some(p =>
+                p.apk && ['PENDING', 'PROCESSING'].includes(p.apk.status)
+            );
+
+            // Also poll if we don't have projects yet (initial load or empty list check)
+            if (hasActiveProjects || projectsRef.current.length === 0) {
+                fetchProjects();
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [fetchProjects]);
 
     return (
 

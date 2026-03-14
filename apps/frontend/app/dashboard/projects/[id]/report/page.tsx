@@ -1,23 +1,24 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
-  ShieldCheck,
-  ShieldWarning,
-  ArrowLeft,
-  Bug,
-  Lock,
-  Warning,
-  Info,
-  CaretDown,
-  CaretUp,
-  Package,
-  Globe,
-  Code,
-  FingerprintSimple,
-  CircleNotch,
-  Robot
+  ShieldCheckIcon,
+  ShieldWarningIcon,
+  ArrowLeftIcon,
+  BugIcon,
+  WarningIcon,
+  InfoIcon,
+  CaretDownIcon,
+  CaretUpIcon,
+  PackageIcon,
+  LockIcon,
+  TagIcon,
+  CircleNotchIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  type Icon as PhosphorIcon,
 } from "@phosphor-icons/react"
 import axios from "axios"
 
@@ -43,15 +44,8 @@ interface ReportData {
     info: number
     total: number
   }
-  categories: { name: string; count: number }[]
   vulnerabilities: Vulnerability[]
   permissions: Permission[]
-  permissionsSummary: {
-    total: number
-    dangerous: number
-    normal: number
-    signature: number
-  }
   manifest: ManifestData
   completedAt: string
 }
@@ -60,10 +54,6 @@ interface Vulnerability {
   ruleId: string
   severity: "ERROR" | "WARNING" | "INFO"
   message: string
-  filePath: string
-  lineStart: number
-  lineEnd: number
-  code: string
   category: string
   owaspCategory: string | null
   cwe: string[]
@@ -86,6 +76,25 @@ interface ManifestData {
   exportedComponents: { name: string; type: string; intentFilters: number }[]
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────
+function gradeLabel(grade: string | null): string {
+  switch (grade) {
+    case "A": return "Excellent"
+    case "B": return "Good"
+    case "C": return "Moderate"
+    case "D": return "Poor"
+    case "F": return "Critical"
+    default: return "Unrated"
+  }
+}
+
+function scoreColor(score: number): string {
+  if (score > 80) return "text-emerald-500"
+  if (score > 60) return "text-amber-500"
+  if (score > 40) return "text-orange-500"
+  return "text-red-500"
+}
+
 // ─── Main Report Page ────────────────────────────────────────────────
 export default function ReportPage() {
   const params = useParams()
@@ -97,227 +106,432 @@ export default function ReportPage() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"vulnerabilities" | "permissions" | "manifest">("vulnerabilities")
 
-  useEffect(() => {
-    fetchReport()
-  }, [projectId])
-
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     try {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reports/${projectId}`,
         { withCredentials: true }
       )
       setReport(data)
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to load report")
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.error : "Failed to load report"
+      setError(errorMsg || "Failed to load report")
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId])
+
+  useEffect(() => {
+    fetchReport()
+  }, [fetchReport])
 
   if (loading) return <LoadingState />
   if (error) return <ErrorState error={error} onBack={() => router.push("/dashboard/projects")} />
   if (!report) return null
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50">
-      <div className="p-8 space-y-6 max-w-7xl mx-auto">
-        {/* Back + Header */}
-        <div className="flex items-center gap-4">
+    <div className="flex-1 min-h-screen bg-slate-50/50 overflow-y-auto">
+      <div className="max-w-[1400px] mx-auto p-8 space-y-8 animate-in fade-in duration-500">
+
+        {/* Header Section */}
+        <div className="flex items-center gap-6">
           <button
             onClick={() => router.push("/dashboard/projects")}
-            className="p-2 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all cursor-pointer group"
+            className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all shadow-sm"
           >
-            <ArrowLeft size={20} className="text-gray-600 group-hover:text-gray-900" />
+            <ArrowLeftIcon size={20} weight="bold" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{report.project.name}</h1>
-            <p className="text-sm text-gray-500 mt-0.5 font-medium">
-              {report.apk.packageName || "Unknown Package"} • v{report.apk.versionName || "?"}
-              {report.completedAt && ` • Analyzed ${new Date(report.completedAt).toLocaleString()}`}
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              {report.project.name}
+            </h1>
+            <p className="text-sm font-medium text-slate-500 flex items-center gap-2 mt-1">
+              <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-slate-600">
+                {report.apk.packageName || "Unknown"}
+              </code>
+              {report.apk.versionName && <span>· v{report.apk.versionName}</span>}
+              {report.completedAt && (
+                <span>
+                  · Analyzed on {new Date(report.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              )}
             </p>
           </div>
         </div>
 
-        {/* Score + Summary Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <ScoreCard score={report.score.value} grade={report.score.grade} />
-          <SummaryCard
-            icon={<Bug size={20} weight="duotone" />}
-            label="Critical"
-            value={report.severitySummary.critical}
-            color="red"
-          />
-          <SummaryCard
-            icon={<Warning size={20} weight="duotone" />}
-            label="Warnings"
-            value={report.severitySummary.warning}
-            color="amber"
-          />
-          <SummaryCard
-            icon={<Info size={20} weight="duotone" />}
-            label="Info"
-            value={report.severitySummary.info}
-            color="blue"
-          />
+        {/* Top Grid: Overview Stats & Recent Event Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <SecurityOverview summary={report.severitySummary} />
+          <QuickFindings findings={report.vulnerabilities} />
         </div>
 
-        {/* Category Breakdown + Score Deductions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CategoryBreakdown categories={report.categories} />
-          <ScoreDeductions deductions={report.score.deductions} />
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-white rounded-xl border border-gray-200 p-1 flex w-fit shadow-sm">
-          {[
-            { key: "vulnerabilities" as const, label: "Vulnerabilities", icon: <Bug size={16} /> },
-            { key: "permissions" as const, label: "Permissions", icon: <ShieldCheck size={16} /> },
-            { key: "manifest" as const, label: "Manifest", icon: <Package size={16} /> },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                activeTab === tab.key
-                  ? "bg-gray-900 text-white shadow-md shadow-gray-200"
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {activeTab === "vulnerabilities" && <VulnerabilityTable findings={report.vulnerabilities} />}
-          {activeTab === "permissions" && <PermissionsGrid permissions={report.permissions} summary={report.permissionsSummary} />}
-          {activeTab === "manifest" && <ManifestInsights manifest={report.manifest} />}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Score Card ──────────────────────────────────────────────────────
-function ScoreCard({ score, grade }: { score: number | null; grade: string | null }) {
-  const gradeStyles = {
-    A: { color: "text-emerald-600 bg-emerald-50 border-emerald-200", ring: "stroke-emerald-600" },
-    B: { color: "text-blue-600 bg-blue-50 border-blue-200", ring: "stroke-blue-600" },
-    C: { color: "text-amber-600 bg-amber-50 border-amber-200", ring: "stroke-amber-600" },
-    D: { color: "text-orange-600 bg-orange-50 border-orange-200", ring: "stroke-orange-600" },
-    F: { color: "text-red-600 bg-red-50 border-red-200", ring: "stroke-red-600" },
-  }
-  const currentStyle = gradeStyles[grade as keyof typeof gradeStyles] || gradeStyles.F
-
-  const circumference = 2 * Math.PI * 40
-  const pct = Math.max(0, Math.min(100, score || 0))
-  const offset = circumference - (pct / 100) * circumference
-
-  return (
-    <div className={`rounded-2xl border p-5 flex items-center justify-between shadow-sm transition-all hover:shadow-md h-[120px] bg-white`}>
-      <div className="relative w-[85px] h-[85px] shrink-0">
-        <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" strokeWidth="8" />
-          <circle
-            cx="50" cy="50" r="40" fill="none"
-            className={`${currentStyle.ring} transition-all duration-1000 ease-out`}
-            strokeWidth="8" strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`text-2xl font-black ${currentStyle.color.split(" ")[0]}`}>{grade || "F"}</span>
-        </div>
-      </div>
-      <div className="text-right">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Score</p>
-        <p className="text-4xl font-black text-gray-900 tracking-tighter">
-          {Math.round(score || 0)}
-          <span className="text-lg font-bold text-gray-300 ml-1">/100</span>
-        </p>
-      </div>
-    </div>
-  )
-}
-
-// ─── Summary Card ────────────────────────────────────────────────────
-function SummaryCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
-  const colors: Record<string, string> = {
-    red: "text-red-600 bg-red-50 border-red-100",
-    amber: "text-amber-600 bg-amber-50 border-amber-100",
-    blue: "text-blue-600 bg-blue-50 border-blue-100",
-  }
-  return (
-    <div className={`rounded-2xl border p-5 shadow-sm transition-all hover:shadow-md h-[120px] bg-white flex flex-col justify-between`}>
-      <div className="flex items-center gap-2">
-        <div className={`p-2 rounded-lg ${colors[color]}`}>
-          {icon}
-        </div>
-        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{label}</span>
-      </div>
-      <p className="text-4xl font-black text-gray-900 tracking-tighter self-end">{value}</p>
-    </div>
-  )
-}
-
-// ─── Category Breakdown ──────────────────────────────────────────────
-function CategoryBreakdown({ categories }: { categories: { name: string; count: number }[] }) {
-  const max = Math.max(...categories.map(c => c.count), 1)
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-      <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-6">Threat Categories</h3>
-      {categories.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 opacity-40">
-          <ShieldCheck size={32} weight="duotone" />
-          <p className="text-sm font-medium mt-2">Zero threats detected</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {categories.map(cat => (
-            <div key={cat.name} className="group">
-              <div className="flex justify-between text-xs font-bold text-gray-600 mb-1.5 px-0.5">
-                <span>{cat.name}</span>
-                <span>{cat.count}</span>
-              </div>
-              <div className="h-2.5 bg-gray-50 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gray-900 rounded-full transition-all duration-1000 ease-out"
-                  style={{ width: `${(cat.count / max) * 100}%` }}
+        {/* Content Section: Detailed Tabs & Metrics Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden min-h-[600px] flex flex-col">
+              {/* Tab Navigation */}
+              <div className="flex border-b border-slate-100 bg-slate-50/50">
+                <TabButton
+                  active={activeTab === "vulnerabilities"}
+                  icon={BugIcon}
+                  label="Vulnerabilities"
+                  count={report.vulnerabilities.length}
+                  onClick={() => setActiveTab("vulnerabilities")}
+                />
+                <TabButton
+                  active={activeTab === "permissions"}
+                  icon={ShieldCheckIcon}
+                  label="Permissions"
+                  count={report.permissions.length}
+                  onClick={() => setActiveTab("permissions")}
+                />
+                <TabButton
+                  active={activeTab === "manifest"}
+                  icon={PackageIcon}
+                  label="Manifest Analysis"
+                  onClick={() => setActiveTab("manifest")}
                 />
               </div>
+
+              {/* Tab Content */}
+              <div className="p-8 flex-1">
+                {activeTab === "vulnerabilities" && <VulnerabilityList vulnerabilities={report.vulnerabilities} />}
+                {activeTab === "permissions" && <PermissionList permissions={report.permissions} />}
+                {activeTab === "manifest" && <ManifestView manifest={report.manifest} />}
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="space-y-6">
+            <TrustScore score={report.score.value} grade={report.score.grade} />
+            {report.score.deductions.length > 0 && (
+              <Deductions list={report.score.deductions} />
+            )}
+          </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Layout Components ───────────────────────────────────────────────
+
+function TabButton({ active, icon: Icon, label, count, onClick }: {
+  active: boolean; icon: PhosphorIcon; label: string; count?: number; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-8 py-5 flex items-center gap-3 text-sm font-bold transition-all border-b-2 outline-none cursor-pointer ${active
+        ? "text-blue-600 border-blue-600 bg-white"
+        : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-slate-100/30"
+        }`}
+    >
+      <Icon size={18} weight={active ? "fill" : "bold"} />
+      <span>{label}</span>
+      {count !== undefined && (
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${active ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-400"
+          }`}>
+          {count}
+        </span>
+      )}
+    </button>
+  )
+}
+
+function SecurityOverview({ summary }: { summary: ReportData["severitySummary"] }) {
+  return (
+    <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+      <div className="mb-8">
+        <h2 className="text-lg font-bold text-slate-900">Security Overview</h2>
+        <p className="text-sm text-slate-500 mt-1">Detailed breakdown of total detected threats.</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <StatCard label="Critical" count={summary.critical} icon={ShieldWarningIcon} color="red" />
+        <StatCard label="Warnings" count={summary.warning} icon={WarningIcon} color="amber" />
+        <StatCard label="Info" count={summary.info} icon={InfoIcon} color="blue" />
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ label, count, icon: Icon, color }: { label: string; count: number; icon: PhosphorIcon; color: "red" | "amber" | "blue" }) {
+  const styles = {
+    red: "bg-red-50 text-red-500 border-red-100",
+    amber: "bg-amber-50 text-amber-500 border-amber-100",
+    blue: "bg-blue-50 text-blue-500 border-blue-100",
+  }
+  return (
+    <div className={`p-6 rounded-2xl border ${styles[color]} flex items-center gap-5 transition-transform hover:-translate-y-1`}>
+      <div className="bg-white p-3 rounded-xl shadow-sm shrink-0">
+        <Icon size={28} weight="duotone" />
+      </div>
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none mb-2">{label}</p>
+        <p className="text-3xl font-black leading-none tracking-tight">{count}</p>
+      </div>
+    </div>
+  )
+}
+
+function QuickFindings({ findings }: { findings: Vulnerability[] }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+      <h2 className="text-lg font-bold text-slate-900 mb-6">Recent Findings</h2>
+      <div className="space-y-4">
+        {findings.length === 0 ? (
+          <p className="text-sm text-slate-400 py-10 text-center italic">No findings reported.</p>
+        ) : (
+          findings.slice(0, 5).map((f, i) => (
+            <div key={i} className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group cursor-default">
+              <div className={`shrink-0 mt-0.5 ${f.severity === "ERROR" ? "text-red-500" : "text-amber-500"}`}>
+                {f.severity === "ERROR" ? <ShieldWarningIcon size={16} weight="fill" /> : <WarningIcon size={16} weight="fill" />}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-800 truncate leading-tight group-hover:text-blue-100 transition-colors font-mono tracking-tight">{f.ruleId}</p>
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{f.message}</p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TrustScore({ score, grade }: { score: number | null; grade: string | null }) {
+  const percentage = score || 0
+  const circumference = 2 * Math.PI * 80
+  const offset = circumference - (circumference * percentage) / 100
+  const colorClass = scoreColor(percentage)
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center">
+      <h2 className="text-lg font-bold text-slate-900 self-start mb-8 tracking-tight">Trust Score</h2>
+
+      <div className="relative w-48 h-48 flex items-center justify-center scale-110 mb-8">
+        <svg width="180" height="180" viewBox="0 0 180 180" className="-rotate-90">
+          <circle cx="90" cy="90" r="80" strokeWidth="10" stroke="currentColor" fill="transparent" className="text-slate-100" />
+          <circle
+            cx="90" cy="90" r="80"
+            strokeWidth="10" stroke="currentColor" fill="transparent"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            className={`${colorClass} transition-all duration-1000 ease-out`}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-5xl font-black text-slate-900 tracking-tighter leading-none">{percentage}</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">/ 100</span>
+        </div>
+      </div>
+
+      <div className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-4">
+        <div className={`w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-2xl font-black ${colorClass}`}>
+          {grade || "–"}
+        </div>
+        <div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Rating</p>
+          <p className="text-sm font-bold text-slate-800 leading-none">{gradeLabel(grade)}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Deductions({ list }: { list: ReportData["score"]["deductions"] }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+      <h2 className="text-lg font-bold text-slate-900 mb-6 tracking-tight">Score Deductions</h2>
+      <div className="space-y-3">
+        {list.map((d, i) => (
+          <div key={i} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-red-100 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]" />
+              <span className="text-sm font-semibold text-slate-700 leading-tight">{d.reason}</span>
+            </div>
+            <span className="text-[11px] font-bold text-red-500 font-mono">-{d.points}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Inner Tab Components ───────────────────────────────────────────
+
+function VulnerabilityList({ vulnerabilities }: { vulnerabilities: Vulnerability[] }) {
+  const [showAll, setShowAll] = useState(false)
+  const displayed = showAll ? vulnerabilities : vulnerabilities.slice(0, 5)
+
+  if (vulnerabilities.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-4">
+        <CheckCircleIcon size={48} weight="duotone" className="text-emerald-400" />
+        <p className="text-sm font-medium italic">No vulnerabilities identified in this project.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {displayed.map((v, i) => (
+        <div key={i} className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:border-slate-300 transition-all flex items-start gap-5">
+          <div className={`p-2.5 rounded-xl shrink-0 ${v.severity === "ERROR" ? "bg-red-50 text-red-500" : "bg-amber-50 text-amber-500"}`}>
+            {v.severity === "ERROR" ? <ShieldWarningIcon size={22} weight="fill" /> : <WarningIcon size={22} weight="fill" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <h4 className="font-bold text-slate-800 text-sm font-mono tracking-tight">{v.ruleId}</h4>
+              <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border ${v.severity === "ERROR" ? "bg-red-50 text-red-600 border-red-200" : "bg-amber-50 text-amber-600 border-amber-200"
+                }`}>
+                {v.severity === "ERROR" ? "Critical" : "Warning"}
+              </span>
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed mb-5">{v.message}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-500">
+                <TagIcon size={12} weight="bold" />
+                <span className="text-[11px] font-bold font-mono tracking-tight">{v.category}</span>
+              </div>
+              {v.cwe.map(c => (
+                <span key={c} className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 font-mono">CWE-{c}</span>
+              ))}
+              <div className="ml-auto flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline cursor-pointer group">
+                Full Analysis <ArrowRightIcon size={14} weight="bold" className="group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+      {vulnerabilities.length > 5 && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm mt-4"
+        >
+          {showAll ? (
+            <><CaretUpIcon size={16} weight="bold" /> Show Less</>
+          ) : (
+            <><CaretDownIcon size={16} weight="bold" /> Show {vulnerabilities.length - 5} More Finding{vulnerabilities.length - 5 !== 1 ? 's' : ''}</>
+          )}
+        </button>
       )}
     </div>
   )
 }
 
-// ─── Score Deductions ────────────────────────────────────────────────
-function ScoreDeductions({ deductions }: { deductions: { reason: string; points: number; category: string }[] }) {
+function PermissionList({ permissions }: { permissions: Permission[] }) {
+  const [showAll, setShowAll] = useState(false)
+  const displayed = showAll ? permissions : permissions.slice(0, 8)
+
+  if (permissions.length === 0) {
+    return <div className="text-sm text-slate-400 text-center py-20 italic">No permissions declared.</div>
+  }
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-      <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-6">Penalties</h3>
-      <div className="space-y-3">
-        {deductions.map((d, i) => (
-          <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50/50 border border-gray-100 transition-hover hover:border-gray-200">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 shrink-0">{d.category}</span>
-              <span className="text-sm font-bold text-gray-700 truncate">{d.reason}</span>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {displayed.map((p, i) => (
+          <div key={i} className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-800 font-mono tracking-tight truncate">{p.shortName}</p>
+              <p className="text-[10px] font-bold text-slate-400 font-mono uppercase tracking-widest truncate opacity-80 mt-1">{p.name}</p>
             </div>
-            <span className="text-sm font-black text-red-600 shrink-0 ml-4">−{d.points}</span>
+            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${p.risk === "dangerous" ? "bg-red-50 text-red-500 border-red-100" :
+              p.risk === "normal" ? "bg-emerald-50 text-emerald-500 border-emerald-100" :
+                "bg-blue-50 text-blue-500 border-blue-100"
+              }`}>
+              {p.risk}
+            </span>
           </div>
         ))}
-        {deductions.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 text-emerald-600">
-            <div className="p-3 bg-emerald-50 rounded-2xl mb-3">
-              <ShieldCheck size={32} weight="duotone" />
+      </div>
+      {permissions.length > 8 && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="w-full py-4 text-sm font-bold text-slate-400 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-all cursor-pointer mt-4"
+        >
+          {showAll ? "Show Less" : `Show All ${permissions.length} Permissions`}
+        </button>
+      )}
+    </div>
+  )
+}
+
+function ManifestView({ manifest }: { manifest: ManifestData }) {
+  const flags = [
+    { label: "Debuggable", val: manifest.debuggable, bad: true, desc: "Controls if the app can be attached to a debugger." },
+    { label: "Allow Backup", val: manifest.allowBackup, bad: true, desc: "Determines if app data is included in system backups." },
+    { label: "Cleartext Traffic", val: manifest.usesCleartextTraffic, bad: true, desc: "Allows unencrypted HTTP network communication." },
+    { label: "Network Security Config", val: !!manifest.networkSecurityConfig, bad: false, desc: "Custom configuration for secure network connections." },
+  ]
+
+  return (
+    <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {flags.map(f => {
+          const isAtRisk = f.val === f.bad
+          return (
+            <div key={f.label} className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                {isAtRisk ? <XCircleIcon size={20} weight="fill" className="text-red-500 mt-0.5" /> : <CheckCircleIcon size={20} weight="fill" className="text-emerald-500 mt-0.5" />}
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">{f.label}</h4>
+                  <p className="text-[11px] text-slate-500 leading-tight mt-1">{f.desc}</p>
+                </div>
+              </div>
+              <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${isAtRisk ? "bg-red-50 text-red-600 border-red-100" : "bg-emerald-50 text-emerald-600 border-emerald-200"
+                }`}>
+                {isAtRisk ? "Exposed" : "Secure"}
+              </span>
             </div>
-            <p className="text-sm font-bold">Perfect Score. No Penalties.</p>
+          )
+        })}
+      </div>
+
+      <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-8">
+        <div>
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Device Configuration</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Package ID</p>
+              <p className="text-sm font-bold text-slate-800 font-mono tracking-tight break-all leading-tight">{manifest.packageName || "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Min API</p>
+              <p className="text-sm font-bold text-slate-800 font-mono leading-tight">Android API {manifest.minSdkVersion || "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Target API</p>
+              <p className="text-sm font-bold text-slate-800 font-mono leading-tight">Android API {manifest.targetSdkVersion || "—"}</p>
+            </div>
+          </div>
+        </div>
+
+        {manifest.exportedComponents?.length > 0 && (
+          <div>
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Exposed Components ({manifest.exportedComponents.length})</h4>
+            <div className="space-y-2.5">
+              {manifest.exportedComponents.map((c, i) => (
+                <div key={i} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl hover:border-blue-200 transition-all">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-md shrink-0">
+                      {c.type}
+                    </span>
+                    <span className="text-sm font-bold text-slate-700 font-mono tracking-tight truncate">
+                      {c.name}
+                    </span>
+                  </div>
+                  {c.intentFilters > 0 && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 rounded-xl border border-amber-100 shrink-0">
+                      <LockIcon size={12} weight="bold" className="text-amber-500" />
+                      <span className="text-[11px] font-bold text-slate-600">{c.intentFilters} filter{c.intentFilters !== 1 ? 's' : ''}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -325,296 +539,29 @@ function ScoreDeductions({ deductions }: { deductions: { reason: string; points:
   )
 }
 
-// ─── Vulnerability Table ─────────────────────────────────────────────
-function VulnerabilityTable({ findings }: { findings: Vulnerability[] }) {
-  const [expanded, setExpanded] = useState<number | null>(null)
-  
-  return (
-    <div className="space-y-3">
-      {findings.map((v, i) => (
-        <div key={i} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm transition-all hover:shadow-md">
-          <button 
-            onClick={() => setExpanded(expanded === i ? null : i)}
-            className="w-full px-6 py-4 flex items-center gap-4 text-left cursor-pointer group"
-          >
-            <div className={`p-2 rounded-lg shrink-0 ${
-              v.severity === "ERROR" ? "bg-red-50 text-red-600" :
-              v.severity === "WARNING" ? "bg-amber-50 text-amber-600" : "bg-blue-50 text-blue-600"
-            }`}>
-              {v.severity === "ERROR" ? <Bug size={20} weight="bold" /> : 
-               v.severity === "WARNING" ? <Warning size={20} weight="bold" /> : <Info size={20} weight="bold" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[10px] uppercase font-black tracking-widest text-gray-400">{v.category}</span>
-                {v.owaspCategory && (
-                  <span className="text-[10px] uppercase font-black tracking-widest text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">{v.owaspCategory}</span>
-                )}
-              </div>
-              <p className="text-sm font-bold text-gray-900 truncate pr-4">{v.message}</p>
-            </div>
-            <div className="p-2 rounded-lg bg-gray-50 text-gray-400 group-hover:bg-gray-100 group-hover:text-gray-900 transition-all shrink-0">
-              {expanded === i ? <CaretUp size={16} weight="bold" /> : <CaretDown size={16} weight="bold" />}
-            </div>
-          </button>
-          
-          {expanded === i && (
-            <div className="px-6 pb-6 pt-2 border-t border-gray-50 flex flex-col items-start gap-4">
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-                  <div className="p-3 bg-gray-50 rounded-xl">
-                    <p className="text-[10px] font-black uppercase text-gray-400 mb-1">File Location</p>
-                    <p className="text-xs font-bold text-gray-700 truncate">{v.filePath}:{v.lineStart}</p>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded-xl">
-                    <p className="text-[10px] font-black uppercase text-gray-400 mb-1">CWE ID</p>
-                    <p className="text-xs font-bold text-gray-700 italic">{v.cwe.join(", ") || "N/A"}</p>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded-xl col-span-1 md:col-span-2">
-                    <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Rule</p>
-                    <p className="text-xs font-bold text-gray-500 truncate">{v.ruleId}</p>
-                  </div>
-               </div>
-               
-               <div className="w-full">
-                 <div className="flex items-center justify-between mb-2">
-                   <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Source Context</p>
-                   <span className="text-[10px] font-bold text-gray-300">LINES {v.lineStart}-{v.lineEnd}</span>
-                 </div>
-                 <div className="bg-gray-900 rounded-2xl p-4 overflow-x-auto border-4 border-gray-800 shadow-inner group">
-                   <code className="text-xs font-mono text-emerald-400 break-words leading-relaxed">
-                     {v.code}
-                   </code>
-                 </div>
-               </div>
-
-               <AIAssistant finding={v} />
-            </div>
-          )}
-        </div>
-      ))}
-      {findings.length === 0 && (
-         <div className="bg-white rounded-2xl border border-gray-200 border-dashed p-16 flex flex-col items-center justify-center opacity-60">
-            <ShieldCheck size={48} weight="duotone" className="text-emerald-500 mb-4" />
-            <h4 className="text-lg font-black text-gray-900">Scan Clean</h4>
-            <p className="text-sm font-bold text-gray-500">No static analysis vulnerabilities matched.</p>
-         </div>
-      )}
-    </div>
-  )
-}
-
-// ─── AI Assistant Component ──────────────────────────────────────────
-function AIAssistant({ finding }: { finding: Vulnerability }) {
-  const [explanation, setExplanation] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  const handleExplain = async () => {
-    setLoading(true)
-    try {
-      const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/explain/vulnerability`,
-        { vulnerability: finding },
-        { withCredentials: true }
-      )
-      setExplanation(data.explanation)
-    } catch (err) {
-      setExplanation("## Error\nFailed to reach the security assistant.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden mt-2">
-      <div className="px-5 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
-         <div className="flex items-center gap-2">
-           <div className="p-1.5 bg-gray-900 rounded-lg text-white">
-             <Robot size={16} weight="bold" />
-           </div>
-           <span className="text-xs font-black uppercase tracking-widest text-gray-900">Security Assistant</span>
-         </div>
-         <button 
-           onClick={handleExplain}
-           disabled={loading || !!explanation}
-           className="text-[10px] font-black uppercase bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-         >
-           {loading ? "Analyzing..." : explanation ? "Analysis Complete" : "Deep Analysis"}
-         </button>
-      </div>
-      
-      {explanation && (
-        <div className="p-6 space-y-4">
-          <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed font-medium 
-                        prose-headings:text-gray-900 prose-headings:font-black prose-headings:uppercase prose-headings:text-xs prose-headings:tracking-widest
-                        prose-pre:bg-gray-900 prose-pre:rounded-xl prose-pre:border-0 prose-code:text-emerald-400">
-            {/* Simple split rendering for structured content */}
-            {explanation.split("##").map((section, si) => {
-              if (!section.trim()) return null
-              const [title, ...rest] = section.split("\n")
-              return (
-                <div key={si} className="animate-in fade-in slide-in-from-top-1 duration-500">
-                  <h4 className="flex items-center gap-2 mb-2 text-gray-900">
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-900" />
-                    {title}
-                  </h4>
-                  <div className="pl-3.5 border-l-2 border-slate-200 text-slate-600 whitespace-pre-wrap mb-6">
-                    {rest.join("\n").trim()}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-      
-      {loading && (
-        <div className="p-12 flex flex-col items-center justify-center space-y-3">
-          <CircleNotch size={24} className="animate-spin text-gray-900" />
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Consulting Gemini Expert...</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Permissions Grid ────────────────────────────────────────────────
-function PermissionsGrid({ permissions, summary }: { permissions: Permission[]; summary: any }) {
-  const getStyle = (risk: string) => {
-    switch (risk) {
-      case "dangerous": return "bg-red-50 text-red-700 border-red-200 shadow-red-100"
-      case "signature": return "bg-amber-50 text-amber-700 border-amber-200 shadow-amber-100"
-      default: return "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-emerald-100"
-    }
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "Dangerous", val: summary.dangerous, color: "text-red-600" },
-          { label: "Signature", val: summary.signature, color: "text-amber-600" },
-          { label: "Normal", val: summary.normal, color: "text-emerald-600" },
-        ].map(item => (
-          <div key={item.label} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm text-center">
-             <p className={`text-3xl font-black ${item.color} tracking-tighter`}>{item.val}</p>
-             <p className="text-[10px] font-black uppercase text-gray-400 mt-1">{item.label}</p>
-          </div>
-        ))}
-      </div>
-      
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-wrap gap-2.5">
-        {permissions.map((p, i) => (
-          <div 
-            key={i} 
-            className={`px-3 py-1.5 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider shadow-sm transition-all hover:scale-105 ${getStyle(p.risk)}`}
-          >
-            {p.shortName}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Manifest Insights ───────────────────────────────────────────────
-function ManifestInsights({ manifest }: { manifest: ManifestData }) {
-  const flags = [
-    { label: "Debug Mode", val: manifest.debuggable, bad: true, desc: "Enabled allows runtime attachment" },
-    { label: "Local Backup", val: manifest.allowBackup, bad: true, desc: "Allows full data extraction via ADB" },
-    { label: "Cleartext (HTTP)", val: manifest.usesCleartextTraffic, bad: true, desc: "Transmits data over unencrypted channels" },
-    { label: "Net Security Config", val: !!manifest.networkSecurityConfig, bad: false, desc: "Custom cert pinning configuration" },
-  ]
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {flags.map(f => (
-          <div key={f.label} className="bg-white rounded-2x border border-gray-200 p-5 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-gray-900 mb-1">{f.label}</p>
-              <p className="text-[10px] font-bold text-gray-400">{f.desc}</p>
-            </div>
-            <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter shadow-sm border-2 ${
-              f.val === f.bad ? "bg-red-50 text-red-600 border-red-200" : "bg-emerald-50 text-emerald-600 border-emerald-200"
-            }`}>
-              {f.val === f.bad ? "EXPOSED" : "SECURE"}
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-6">Device Configuration</h3>
-        <div className="grid grid-cols-3 gap-8">
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400 mb-2">Package Name</p>
-            <p className="text-xs font-bold text-gray-900 font-mono break-all">{manifest.packageName}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400 mb-2">Min API Level</p>
-            <p className="text-xs font-bold text-gray-900">SDK {manifest.minSdkVersion}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase text-gray-400 mb-2">Target SDK</p>
-            <p className="text-xs font-bold text-gray-900">SDK {manifest.targetSdkVersion}</p>
-          </div>
-        </div>
-      </div>
-      
-      {manifest.exportedComponents?.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-6">Exposed Gateways</h3>
-          <div className="space-y-3">
-            {manifest.exportedComponents.map((comp, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 group hover:border-slate-200 transition-all">
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase bg-white border border-slate-200 px-2.5 py-1 rounded-lg shadow-sm">{comp.type}</span>
-                  <span className="text-xs font-bold text-slate-700 font-mono truncate max-w-sm">{comp.name}</span>
-                </div>
-                {comp.intentFilters > 0 && (
-                   <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 rounded-lg border border-amber-100">
-                     <Lock size={12} weight="bold" className="text-amber-600" />
-                     <span className="text-[10px] font-black text-amber-600 uppercase tracking-tighter">{comp.intentFilters} Filters</span>
-                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Loading / Error States ──────────────────────────────────────────
 function LoadingState() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 h-screen">
-      <div className="relative">
-        <CircleNotch size={48} className="animate-spin text-gray-900" />
-        <div className="absolute inset-0 flex items-center justify-center">
-           <div className="w-1.5 h-1.5 rounded-full bg-gray-900" />
-        </div>
-      </div>
-      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-6 animate-pulse">Decompiling Report Structure...</p>
+    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 h-screen">
+      <CircleNotchIcon size={40} className="animate-spin text-blue-500" />
+      <p className="text-sm font-bold text-slate-400 mt-6 animate-pulse">Running security audit...</p>
     </div>
   )
 }
 
 function ErrorState({ error, onBack }: { error: string; onBack: () => void }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 h-screen">
-      <div className="p-4 bg-red-50 rounded-3xl border-4 border-white shadow-xl mb-6">
-        <ShieldWarning size={48} weight="duotone" className="text-red-500" />
+    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 h-screen p-6">
+      <div className="w-16 h-16 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center text-red-500 mb-6 shadow-sm">
+        <ShieldWarningIcon size={32} weight="duotone" />
       </div>
-      <p className="text-lg font-black text-gray-900 tracking-tight mb-2">Analysis Access Denied</p>
-      <p className="text-sm font-bold text-gray-400 max-w-xs text-center mb-8 whitespace-pre-wrap">{error}</p>
+      <h3 className="text-xl font-bold text-slate-900 mb-2">Audit Unavailable</h3>
+      <p className="text-sm text-slate-500 max-w-sm text-center mb-8 leading-relaxed">{error}</p>
       <button
         onClick={onBack}
-        className="group flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-gray-200 transition-all hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+        className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold text-sm transition-all hover:bg-slate-800 shadow-md shadow-slate-200 cursor-pointer"
       >
-        <ArrowLeft size={16} weight="bold" className="transition-transform group-hover:-translate-x-1" />
-        Return to Safety
+        <ArrowLeftIcon size={18} weight="bold" />
+        Return to Dashboard
       </button>
     </div>
   )

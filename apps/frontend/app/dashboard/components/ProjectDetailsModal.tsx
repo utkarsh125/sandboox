@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     XIcon,
     InfoIcon,
@@ -93,17 +94,14 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
 }) => {
     const [isRenaming, setIsRenaming] = useState(false);
     const [newName, setNewName] = useState('');
+    const router = useRouter();
     const [loadingAction, setLoadingAction] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
-            // slight delay so CSS transition plays on mount
-            requestAnimationFrame(() => setMounted(true));
-        } else {
-            setMounted(false);
+            // Logic if needed on open
         }
     }, [isOpen]);
 
@@ -135,8 +133,9 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
             );
             setIsRenaming(false);
             onRefresh();
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to rename project');
+        } catch (err) {
+            const errorMsg = axios.isAxiosError(err) ? err.response?.data?.error : 'Failed to rename project';
+            setError(errorMsg || 'Failed to rename project');
         } finally {
             setLoadingAction(null);
         }
@@ -162,8 +161,9 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                 { withCredentials: true }
             );
             onRefresh();
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to start analysis');
+        } catch (err) {
+            const errorMsg = axios.isAxiosError(err) ? err.response?.data?.error : 'Failed to start analysis';
+            setError(errorMsg || 'Failed to start analysis');
         } finally {
             setLoadingAction(null);
         }
@@ -377,42 +377,53 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                     </div>
 
                     {/* Footer actions */}
-                    <div className="px-5 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center gap-2.5">
-                        {/* Start */}
+                    <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 grid grid-cols-2 sm:flex sm:items-center gap-2.5">
+                        {/* Start Analysis */}
                         <button
                             onClick={handleStart}
                             disabled={isProcessDone || loadingAction === 'start'}
-                            className={`action-btn flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+                            className={`action-btn h-11 flex-1 flex items-center justify-center gap-2 px-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap
                                 ${isProcessDone
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-gray-900 text-white shadow-sm hover:bg-gray-800'
+                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                    : 'bg-slate-900 text-white shadow-sm hover:bg-slate-800'
                                 } ${loadingAction === 'start' ? 'opacity-70' : ''}`}
                         >
                             {loadingAction === 'start' ? (
-                                <SpinnerGapIcon size={15} className="spin-slow" />
+                                <SpinnerGapIcon size={16} className="animate-spin" />
                             ) : (
-                                <PlayIcon size={15} weight="fill" />
+                                <PlayIcon size={16} weight="fill" />
                             )}
-                            {loadingAction === 'start' ? 'Starting…' : 'Run Analysis'}
+                            <span>{loadingAction === 'start' ? 'Starting…' : 'Run Analysis'}</span>
                         </button>
 
                         {/* Rename */}
                         <button
                             onClick={() => { setNewName(project.name); setIsRenaming(true); }}
-                            className="action-btn flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+                            className="action-btn h-11 flex-1 flex items-center justify-center gap-2 px-3 border border-slate-200 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all whitespace-nowrap"
                         >
-                            <PencilSimpleIcon size={15} />
-                            Rename
+                            <PencilSimpleIcon size={16} />
+                            <span>Rename</span>
                         </button>
+
+                        {/* View Report */}
+                        {apkStatus === 'COMPLETED' && (
+                            <button
+                                onClick={() => router.push(`/dashboard/projects/${project.id}/report`)}
+                                className="action-btn h-11 flex-1 flex items-center justify-center gap-2 px-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm whitespace-nowrap"
+                            >
+                                <ArrowSquareOutIcon size={16} weight="bold" />
+                                <span>View Report</span>
+                            </button>
+                        )}
 
                         {/* Delete */}
                         <button
                             onClick={() => setIsDeleteDialogOpen(true)}
                             disabled={loadingAction === 'delete'}
-                            className={`action-btn flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 border border-red-200 bg-white text-red-600 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors ${loadingAction === 'delete' ? 'opacity-70' : ''}`}
+                            className={`action-btn h-11 flex-1 flex items-center justify-center gap-2 px-3 border border-red-200 bg-white text-red-600 rounded-xl text-sm font-semibold hover:bg-red-50 transition-all whitespace-nowrap ${loadingAction === 'delete' ? 'opacity-70' : ''}`}
                         >
-                            <TrashIcon size={15} />
-                            Delete
+                            <TrashIcon size={16} />
+                            <span>Delete</span>
                         </button>
                     </div>
                 </div>

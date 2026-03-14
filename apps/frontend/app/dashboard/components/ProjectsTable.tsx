@@ -1,16 +1,11 @@
 "use client"
-import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import React, { useState, useEffect } from 'react'
 import {
     FolderIcon,
     CheckCircleIcon,
     XCircleIcon,
     ClockIcon,
     MinusCircleIcon,
-    DotsThreeVerticalIcon,
-    PlayIcon,
-    PencilSimpleIcon,
-    TrashIcon,
     AndroidLogoIcon,
     SpinnerGapIcon,
     WarningCircleIcon,
@@ -55,136 +50,20 @@ const apkStatusConfig: Record<string, { label: string; dot: string }> = {
     FAILED: { label: 'Failed', dot: 'bg-red-400' },
 }
 
-// Portal-based dropdown rendered at document body level — eliminates all clipping issues
-const DropdownMenu: React.FC<{
-    project: Project
-    anchor: HTMLElement | null
-    onClose: () => void
-    onAction: (action: 'start' | 'rename' | 'delete') => void
-    isProcessDone: boolean
-}> = ({ project, anchor, onClose, onAction, isProcessDone }) => {
-    const menuRef = useRef<HTMLDivElement>(null)
-    const [pos, setPos] = useState({ top: 0, left: 0 })
-
-    React.useLayoutEffect(() => {
-        if (!anchor) return
-
-        const rect = anchor.getBoundingClientRect()
-        const menuWidth = 192 // w-48
-        const menuHeight = 130
-
-        let top = rect.bottom + 6
-        let left = rect.right - menuWidth
-
-        // Flip up if would go off screen bottom
-        if (rect.bottom + menuHeight > window.innerHeight) {
-            top = rect.top - menuHeight - 6
-        }
-        // Clamp to left edge
-        if (left < 8) left = 8
-
-        setPos({ top, left })
-    }, [anchor])
-
-    useEffect(() => {
-        const handleClick = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
-                anchor && !anchor.contains(e.target as Node)) {
-                onClose()
-            }
-        }
-        const handleScroll = () => onClose()
-        document.addEventListener('mousedown', handleClick)
-        document.addEventListener('scroll', handleScroll, true)
-        return () => {
-            document.removeEventListener('mousedown', handleClick)
-            document.removeEventListener('scroll', handleScroll, true)
-        }
-    }, [onClose, anchor])
-
-    const portal = typeof document !== 'undefined'
-        ? document.getElementById('dropdown-portal') ?? document.body
-        : null
-
-    if (!portal) return null
-
-    return createPortal(
-        <div
-            ref={menuRef}
-            style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, width: 192, pointerEvents: 'auto' }}
-            className="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden"
-        >
-            <style>{`
-                @keyframes dropIn {
-                    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-                    to   { opacity: 1; transform: translateY(0)     scale(1);    }
-                }
-                .drop-in { animation: dropIn 0.15s cubic-bezier(0.16,1,0.3,1) forwards; }
-            `}</style>
-            <div className="drop-in py-1">
-                <button
-                    onClick={() => { onAction('start'); onClose(); }}
-                    disabled={isProcessDone}
-                    className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center gap-2.5 transition-colors ${isProcessDone
-                        ? 'text-gray-400 cursor-not-allowed bg-gray-50/50'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                        }`}
-                >
-                    <PlayIcon size={15} weight={isProcessDone ? 'regular' : 'fill'} />
-                    <span>Run Analysis</span>
-                </button>
-                <button
-                    onClick={() => { onAction('rename'); onClose(); }}
-                    className="w-full text-left px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2.5 transition-colors"
-                >
-                    <PencilSimpleIcon size={15} />
-                    <span>Rename</span>
-                </button>
-                <div className="h-px bg-gray-100 mx-2 my-1" />
-                <button
-                    onClick={() => { onAction('delete'); onClose(); }}
-                    className="w-full text-left px-3.5 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors"
-                >
-                    <TrashIcon size={15} />
-                    <span>Delete</span>
-                </button>
-            </div>
-        </div>,
-        portal
-    )
-}
-
 const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onProjectClick }) => {
-    const [openMenu, setOpenMenu] = useState<{ id: string, anchor: HTMLElement } | null>(null)
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
     const [actionError, setActionError] = useState<string | null>(null)
 
-    const handleAction = useCallback(async (action: 'start' | 'rename' | 'delete', project: Project) => {
-        setActionError(null)
-        try {
-            if (action === 'start') {
-                await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${project.id}/start`, {}, { withCredentials: true })
-                onRefresh?.()
-            } else if (action === 'rename') {
-                const newName = window.prompt('Enter new project name:', project.name)
-                if (newName && newName.trim() !== project.name && newName.trim() !== '') {
-                    await axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${project.id}`, { name: newName.trim() }, { withCredentials: true })
-                    onRefresh?.()
-                }
-            } else if (action === 'delete') {
-                setProjectToDelete(project)
-            }
-        } catch (err) {
-            console.error(`Failed to ${action} project:`, err)
-            setActionError(`Failed to ${action} project.`)
-        }
-    }, [onRefresh])
-
     const confirmDelete = async () => {
         if (!projectToDelete) return
-        await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${projectToDelete.id}`, { withCredentials: true })
-        onRefresh?.()
-        setProjectToDelete(null)
+        try {
+            await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects/${projectToDelete.id}`, { withCredentials: true })
+            onRefresh?.()
+            setProjectToDelete(null)
+        } catch (err) {
+            console.error('Failed to delete project:', err)
+            setActionError('Failed to delete project.')
+        }
     }
 
     if (projects.length === 0) {
@@ -231,7 +110,6 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                                 <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-5 py-3.5">Type</th>
                                 <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-5 py-3.5">APK Status</th>
                                 <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-5 py-3.5">Outcome</th>
-                                <th className="px-5 py-3.5 w-10"><span className="sr-only">Actions</span></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -240,7 +118,6 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                                 const OutcomeIcon = outcome.icon
                                 const apkStatus = project.apk?.status || 'UPLOADED'
                                 const statusCfg = apkStatusConfig[apkStatus] ?? apkStatusConfig['UPLOADED']
-                                const isProcessDone = ['COMPLETED', 'FAILED', 'PROCESSING'].includes(apkStatus)
                                 const isProcessing = apkStatus === 'PROCESSING'
 
                                 return (
@@ -250,7 +127,6 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                                         className="project-row hover:bg-blue-50/30 transition-colors cursor-pointer group"
                                         style={{ animationDelay: `${i * 40}ms` }}
                                     >
-                                        {/* Name */}
                                         <td className="px-5 py-3.5">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="w-8 h-8 rounded-xl bg-green-100 border-green-500 border-1 flex items-center justify-center shrink-0 transition-colors">
@@ -261,22 +137,16 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                                                 </span>
                                             </div>
                                         </td>
-
-                                        {/* Description */}
                                         <td className="px-5 py-3.5">
                                             <span className={`text-sm line-clamp-1 ${!project.description || project.description === 'null' ? 'text-gray-400 italic' : 'text-gray-500'}`}>
                                                 {project.description && project.description !== 'null' ? project.description : 'No description'}
                                             </span>
                                         </td>
-
-                                        {/* Test type */}
                                         <td className="px-5 py-3.5">
                                             <span className="inline-flex items-center text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">
                                                 {project.testType}
                                             </span>
                                         </td>
-
-                                        {/* APK Status */}
                                         <td className="px-5 py-3.5">
                                             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700">
                                                 {isProcessing ? (
@@ -287,40 +157,11 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                                                 {statusCfg.label}
                                             </span>
                                         </td>
-
-                                        {/* Outcome */}
                                         <td className="px-5 py-3.5">
                                             <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${outcome.className}`}>
                                                 <OutcomeIcon size={13} weight="bold" />
                                                 {project.outcome}
                                             </span>
-                                        </td>
-
-                                        {/* Actions */}
-                                        <td className="px-5 py-3.5 text-right">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    setOpenMenu(
-                                                        openMenu?.id === project.id 
-                                                            ? null 
-                                                            : { id: project.id, anchor: e.currentTarget }
-                                                    )
-                                                }}
-                                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                            >
-                                                <DotsThreeVerticalIcon size={18} weight="bold" />
-                                            </button>
-
-                                            {openMenu?.id === project.id && (
-                                                <DropdownMenu
-                                                    project={project}
-                                                    anchor={openMenu.anchor}
-                                                    onClose={() => setOpenMenu(null)}
-                                                    onAction={(action) => handleAction(action, project)}
-                                                    isProcessDone={isProcessDone}
-                                                />
-                                            )}
                                         </td>
                                     </tr>
                                 )
@@ -336,7 +177,6 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                         const statusCfg = apkStatusConfig[apkStatus] ?? apkStatusConfig['UPLOADED']
                         const outcome = outcomeConfig[project.outcome as keyof typeof outcomeConfig] ?? outcomeConfig['Not Run']
                         const OutcomeIcon = outcome.icon
-                        const isProcessDone = ['COMPLETED', 'FAILED', 'PROCESSING'].includes(apkStatus)
                         const isProcessing = apkStatus === 'PROCESSING'
 
                         return (
@@ -346,8 +186,8 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                                 className="project-row flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50/60 cursor-pointer group"
                                 style={{ animationDelay: `${i * 40}ms` }}
                             >
-                                <div className="w-9 h-9 rounded-xl bg-gray-900 flex items-center justify-center shrink-0">
-                                    <AndroidLogoIcon size={16} weight="duotone" className="text-white" />
+                                <div className="w-9 h-9 rounded-xl bg-green-50 border border-green-200 flex items-center justify-center shrink-0 group-hover:bg-green-100 transition-colors">
+                                    <AndroidLogoIcon size={18} weight="duotone" className="text-green-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 truncate">{project.name}</p>
@@ -367,29 +207,6 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                                         </span>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        setOpenMenu(
-                                            openMenu?.id === project.id 
-                                                ? null 
-                                                : { id: project.id, anchor: e.currentTarget }
-                                        )
-                                    }}
-                                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    <DotsThreeVerticalIcon size={18} weight="bold" />
-                                </button>
-
-                                {openMenu?.id === project.id && (
-                                    <DropdownMenu
-                                        project={project}
-                                        anchor={openMenu.anchor}
-                                        onClose={() => setOpenMenu(null)}
-                                        onAction={(action) => handleAction(action, project)}
-                                        isProcessDone={isProcessDone}
-                                    />
-                                )}
                             </div>
                         )
                     })}

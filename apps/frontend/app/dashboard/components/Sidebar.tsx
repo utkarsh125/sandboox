@@ -8,7 +8,8 @@ import {
     CaretUpIcon,
     UserIcon,
     HouseIcon,
-    FolderSimpleIcon
+    FolderSimpleIcon,
+    ChartPieSlice
 } from '@phosphor-icons/react'
 import { signOut } from '@sandboox/auth/client'
 
@@ -92,6 +93,7 @@ const Sidebar: React.FC = () => {
                     <div className="space-y-0.5">
                         <NavItem icon={<HouseIcon size={18} />} label="Overview" href="/dashboard" isActive={pathname === '/dashboard'} />
                         <NavItem icon={<FolderSimpleIcon size={18} />} label="Projects" href="/dashboard/projects" isActive={pathname === '/dashboard/projects'} />
+                        <NavItem icon={<ChartPieSlice size={18} />} label="Reports" href="/dashboard/reports" isActive={pathname === '/dashboard/reports'} />
                     </div>
                 </div>
 
