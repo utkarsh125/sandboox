@@ -1,4 +1,5 @@
 # Sandboox
+<img width="1920" height="1080" alt="Untitled" src="https://github.com/user-attachments/assets/8fed26c3-e8da-428a-9966-38296a03b737" />
 
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
@@ -10,6 +11,8 @@
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
 
 > **Break your APK before your attackers do. Expose Android app vulnerabilities in minutes.**
+
+https://github.com/user-attachments/assets/f06fa864-044e-4bd8-b553-ef150a345ac5
 
 Sandboox is a comprehensive platform designed to analyze and expose vulnerabilities in Android applications (APKs) and web applications. It provides developers and security researchers with an automated toolkit to identify security flaws before they can be exploited.
 
