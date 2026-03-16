@@ -83,7 +83,11 @@ projectRoutes.get("/", async (c) => {
             userId: user.id
         },
         include: {
-            apk: true
+            apk: {
+                include: {
+                    analysis: true
+                }
+            }
         },
         orderBy: {
             createdAt: "desc"

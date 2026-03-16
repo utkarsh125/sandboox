@@ -1,9 +1,18 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+
+// Registering standard fonts for a clean look
+Font.register({
+    family: 'Inter',
+    fonts: [
+        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2', fontWeight: 400 },
+        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiA.woff2', fontWeight: 700 },
+    ]
+});
 
 const styles = StyleSheet.create({
     page: {
-        padding: '50 60',
+        padding: '60 60',
         backgroundColor: '#FFFFFF',
         fontFamily: 'Helvetica',
     },
@@ -11,115 +20,131 @@ const styles = StyleSheet.create({
     headerSection: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'baseline',
-        borderBottom: '1pt solid #F1F5F9',
-        paddingBottom: 20,
-        marginBottom: 30,
+        alignItems: 'center',
+        borderBottom: '2pt solid #BDF34E',
+        paddingBottom: 25,
+        marginBottom: 35,
     },
     projectTitle: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
-        color: '#0F172A',
-        letterSpacing: -0.5,
+        color: '#0D0D0D',
+        letterSpacing: -0.8,
     },
     packageName: {
         fontSize: 10,
-        color: '#64748B',
-        marginTop: 4,
+        color: '#A1A1A1',
+        marginTop: 6,
+        fontFamily: 'Helvetica-Bold',
     },
     reportTag: {
-        fontSize: 9,
-        fontWeight: 'extrabold',
-        color: '#4F46E5',
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: '#BDF34E',
+        padding: '6 12',
+        borderRadius: 4,
         textTransform: 'uppercase',
-        letterSpacing: 1.5,
+        letterSpacing: 1.2,
     },
     // Summary Grid
     summaryGrid: {
         flexDirection: 'row',
-        gap: 20,
-        marginBottom: 40,
+        gap: 15,
+        marginBottom: 45,
     },
     summaryCard: {
         flex: 1,
-        padding: 15,
-        backgroundColor: '#F8FAFC',
-        borderRadius: 8,
+        padding: 20,
+        backgroundColor: '#F9FAFB',
+        borderRadius: 12,
+        border: '0.5pt solid #E5E7EB',
     },
     summaryLabel: {
-        fontSize: 8,
+        fontSize: 9,
         fontWeight: 'bold',
-        color: '#94A3B8',
+        color: '#A1A1A1',
         textTransform: 'uppercase',
         letterSpacing: 1,
-        marginBottom: 6,
+        marginBottom: 8,
     },
     summaryValue: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: 'bold',
-        color: '#1E293B',
+        color: '#0D0D0D',
     },
     scoreGrade: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
-        color: '#4F46E5',
-        marginTop: 2,
+        color: '#BDF34E',
+        backgroundColor: '#0D0D0D',
+        padding: '2 8',
+        borderRadius: 4,
+        marginTop: 8,
+        alignSelf: 'flex-start',
     },
     // Sections
     sectionHeader: {
-        marginBottom: 20,
+        marginBottom: 25,
+        backgroundColor: '#F3F4F6',
+        padding: '10 15',
+        borderRadius: 8,
     },
     sectionTitle: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#1E293B',
-        borderLeft: '3pt solid #4F46E5',
-        paddingLeft: 10,
+        color: '#0D0D0D',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     },
     // Vulnerability List
     vulnItem: {
-        marginBottom: 15,
-        paddingBottom: 15,
-        borderBottom: '0.5pt solid #F1F5F9',
+        marginBottom: 20,
+        padding: 15,
+        backgroundColor: '#FFFFFF',
+        border: '0.5pt solid #F3F4F6',
+        borderRadius: 10,
     },
     vulnHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 8,
     },
     vulnRuleId: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
-        color: '#0F172A',
+        color: '#0D0D0D',
         fontFamily: 'Helvetica-Bold',
     },
     severity: {
-        fontSize: 8,
-        fontWeight: 'bold',
-        padding: '2 6',
-        borderRadius: 4,
-    },
-    severityCritical: { color: '#B91C1C', backgroundColor: '#FEF2F2' },
-    severityWarning: { color: '#B45309', backgroundColor: '#FFFBEB' },
-    vulnMessage: {
         fontSize: 9,
-        color: '#475569',
-        lineHeight: 1.4,
+        fontWeight: 'bold',
+        padding: '3 8',
+        borderRadius: 6,
+        textTransform: 'uppercase',
+    },
+    severityCritical: { color: '#FFFFFF', backgroundColor: '#EF4444' },
+    severityWarning: { color: '#0D0D0D', backgroundColor: '#F59E0B' },
+    vulnMessage: {
+        fontSize: 10,
+        color: '#4B5563',
+        lineHeight: 1.5,
     },
     footer: {
         position: 'absolute',
         bottom: 40,
         left: 60,
         right: 60,
-        borderTop: '0.5pt solid #F1F5F9',
-        paddingTop: 10,
+        borderTop: '1pt solid #F3F4F6',
+        paddingTop: 15,
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
     footerText: {
-        fontSize: 8,
-        color: '#94A3B8',
+        fontSize: 9,
+        color: '#A1A1A1',
+        fontStyle: 'italic',
     },
 });
 
@@ -134,39 +159,37 @@ export const SecurityReportPDF = ({ data }: { data: any }) => (
                         {data.apk.packageName} • v{data.apk.versionName}
                     </Text>
                 </View>
-                <Text style={styles.reportTag}>Security Audit</Text>
+                <Text style={styles.reportTag}>Audit Summary</Text>
             </View>
 
             {/* Professional Summary Grid */}
             <View style={styles.summaryGrid}>
                 <View style={styles.summaryCard}>
-                    <Text style={styles.summaryLabel}>Trust Score</Text>
+                    <Text style={styles.summaryLabel}>Trust Index</Text>
                     <Text style={styles.summaryValue}>{data.score.value}</Text>
-                    <Text style={styles.scoreGrade}>Grade: {data.score.grade}</Text>
+                    <Text style={styles.scoreGrade}>GRADE {data.score.grade}</Text>
                 </View>
-                <View style={styles.summaryCard}>
+                <View style={[styles.summaryCard, { borderLeft: '4pt solid #EF4444' }]}>
                     <Text style={styles.summaryLabel}>Critical</Text>
                     <Text style={[styles.summaryValue, { color: '#EF4444' }]}>{data.severitySummary.critical}</Text>
                 </View>
-                <View style={styles.summaryCard}>
+                <View style={[styles.summaryCard, { borderLeft: '4pt solid #F59E0B' }]}>
                     <Text style={styles.summaryLabel}>Warnings</Text>
                     <Text style={[styles.summaryValue, { color: '#F59E0B' }]}>{data.severitySummary.warning}</Text>
-                </View>
-                <View style={styles.summaryCard}>
-                    <Text style={styles.summaryLabel}>Permissions</Text>
-                    <Text style={styles.summaryValue}>{data.permissions.length}</Text>
                 </View>
             </View>
 
             {/* Key Findings Section */}
             <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Key Findings</Text>
+                <Text style={styles.sectionTitle}>Vulnerability Log</Text>
             </View>
 
             {data.vulnerabilities.length === 0 ? (
-                <Text style={{ fontSize: 10, color: '#64748B', fontStyle: 'italic' }}>No vulnerabilities detected.</Text>
+                <Text style={{ fontSize: 11, color: '#A1A1A1', fontStyle: 'italic', textAlign: 'center', marginTop: 40 }}>
+                    No critical vulnerabilities were detected during this audit cycle.
+                </Text>
             ) : (
-                data.vulnerabilities.slice(0, 15).map((v: any, i: number) => (
+                data.vulnerabilities.slice(0, 10).map((v: any, i: number) => (
                     <View key={i} style={styles.vulnItem}>
                         <View style={styles.vulnHeader}>
                             <Text style={styles.vulnRuleId}>{v.ruleId}</Text>
@@ -181,9 +204,9 @@ export const SecurityReportPDF = ({ data }: { data: any }) => (
 
             {/* Footer */}
             <View style={styles.footer}>
-                <Text style={styles.footerText}>Automated Scan Result</Text>
+                <Text style={styles.footerText}>Certified Automated Security Assessment</Text>
                 <Text style={styles.footerText}>
-                    Date: {new Date(data.completedAt).toLocaleDateString()}
+                    Generated: {new Date(data.completedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                 </Text>
             </View>
         </Page>

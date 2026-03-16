@@ -39,48 +39,48 @@ const statusConfig: Record<string, {
     PENDING: {
         label: 'Pending',
         detail: 'Queued for processing',
-        colorClass: 'text-amber-600',
-        pillClass: 'bg-amber-50 border-amber-200 text-amber-700',
+        colorClass: 'text-amber-400',
+        pillClass: 'bg-amber-400/10 border-amber-400/20 text-amber-400',
         dotClass: 'bg-amber-400 animate-pulse',
         icon: ClockIcon,
     },
     READY: {
         label: 'Ready',
-        detail: 'GitHub URL verified, ready for analysis',
-        colorClass: 'text-blue-600',
-        pillClass: 'bg-blue-50 border-blue-200 text-blue-700',
-        dotClass: 'bg-blue-400',
+        detail: 'URL verified, ready for analysis',
+        colorClass: 'text-blue-400',
+        pillClass: 'bg-blue-400/10 border-blue-400/20 text-blue-400',
+        dotClass: 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]',
         icon: InfoIcon,
     },
     UPLOADED: {
         label: 'Uploaded',
         detail: 'File uploaded successfully',
-        colorClass: 'text-blue-600',
-        pillClass: 'bg-blue-50 border-blue-200 text-blue-700',
+        colorClass: 'text-blue-400',
+        pillClass: 'bg-blue-400/10 border-blue-400/20 text-blue-400',
         dotClass: 'bg-blue-400',
         icon: FileArrowUpIcon,
     },
     PROCESSING: {
         label: 'Processing',
         detail: 'Analysis in progress',
-        colorClass: 'text-purple-600',
-        pillClass: 'bg-purple-50 border-purple-200 text-purple-700',
-        dotClass: 'bg-purple-500 animate-pulse',
+        colorClass: 'text-[#BDF34E]',
+        pillClass: 'bg-[#BDF34E]/10 border-[#BDF34E]/20 text-[#BDF34E]',
+        dotClass: 'bg-[#BDF34E] animate-pulse shadow-[0_0_12px_#BDF34E]',
         icon: SpinnerGapIcon,
     },
     COMPLETED: {
         label: 'Completed',
         detail: 'Analysis finished successfully',
-        colorClass: 'text-emerald-600',
-        pillClass: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-        dotClass: 'bg-emerald-400',
+        colorClass: 'text-[#BDF34E]',
+        pillClass: 'bg-[#BDF34E]/10 border-[#BDF34E]/20 text-[#BDF34E]',
+        dotClass: 'bg-[#BDF34E] shadow-[0_0_8px_#BDF34E]',
         icon: CheckCircleIcon,
     },
     FAILED: {
         label: 'Failed',
         detail: 'Analysis encountered an error',
-        colorClass: 'text-red-500',
-        pillClass: 'bg-red-50 border-red-200 text-red-600',
+        colorClass: 'text-red-400',
+        pillClass: 'bg-red-400/10 border-red-400/20 text-red-400',
         dotClass: 'bg-red-400',
         icon: WarningCircleIcon,
     },
@@ -189,7 +189,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                     to   { transform: rotate(360deg); }
                 }
                 .modal-backdrop { animation: modalBackdropIn 0.2s ease forwards; }
-                .modal-panel    { animation: modalSlideUp 0.25s cubic-bezier(0.16,1,0.3,1) forwards; }
+                .modal-panel    { animation: modalSlideUp 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
                 .row-1 { animation: rowFadeIn 0.3s ease 0.05s both; }
                 .row-2 { animation: rowFadeIn 0.3s ease 0.12s both; }
                 .row-3 { animation: rowFadeIn 0.3s ease 0.19s both; }
@@ -199,7 +199,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                 .action-btn {
                     position: relative;
                     overflow: hidden;
-                    transition: transform 0.15s ease, box-shadow 0.15s ease;
+                    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
                 }
                 .action-btn:not(:disabled):hover {
                     transform: translateY(-1px);
@@ -207,64 +207,54 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                 .action-btn:not(:disabled):active {
                     transform: translateY(0px);
                 }
-                .action-btn::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: white;
-                    opacity: 0;
-                    transition: opacity 0.15s ease;
-                }
-                .action-btn:not(:disabled):hover::after { opacity: 0.08; }
-                .action-btn:not(:disabled):active::after { opacity: 0.18; }
             `}</style>
 
             {/* Backdrop */}
             <div
-                className="modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-950/60 backdrop-blur-sm p-0 sm:p-4"
+                className="modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md p-0 sm:p-4"
                 onClick={(e) => e.target === e.currentTarget && onClose()}
             >
                 {/* Panel */}
-                <div className="modal-panel bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]">
+                <div className="modal-panel bg-[#161616] border border-white/5 w-full sm:max-w-lg sm:rounded-[40px] rounded-t-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]">
 
                     {/* Header */}
-                    <div className="flex items-center justify-between px-5 py-4">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-green-100 border-1 border-green-500 flex items-center justify-center">
-                                <AndroidLogoIcon size={18} weight="duotone" className="text-green-500" />
+                    <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-[#BDF34E]/10 border border-[#BDF34E]/20 flex items-center justify-center">
+                                <AndroidLogoIcon size={24} weight="duotone" className="text-[#BDF34E]" />
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">APK Project</p>
-                                <h2 className="text-base font-semibold text-gray-900 leading-tight">Project Details</h2>
+                                <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-0.5">Project Profile</p>
+                                <h2 className="text-xl font-bold text-white tracking-tight">Project Details</h2>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="w-10 h-10 flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 rounded-2xl transition-all"
                         >
-                            <XIcon size={18} weight="bold" />
+                            <XIcon size={20} weight="bold" />
                         </button>
                     </div>
 
                     {/* Scrollable body */}
                     <div className="flex-1 overflow-y-auto">
-                        <div className="p-5 space-y-1">
+                        <div className="p-8 space-y-2">
 
                             {/* Error */}
                             {error && (
-                                <div className="flex items-start gap-2.5 p-3 mb-3 text-sm text-red-700 bg-red-50 rounded-xl border border-red-200">
-                                    <WarningCircleIcon size={16} className="mt-0.5 shrink-0 text-red-500" />
+                                <div className="flex items-center gap-3 p-4 mb-4 text-sm text-red-400 bg-red-400/10 rounded-2xl border border-red-400/20">
+                                    <WarningCircleIcon size={18} className="shrink-0" />
                                     {error}
                                 </div>
                             )}
 
                             {/* Project Name row */}
-                            <div className="row-1 group flex items-start gap-3 py-3.5 border-b border-gray-50">
-                                <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-                                    <PencilSimpleIcon size={15} className="text-gray-400" />
+                            <div className="row-1 group flex items-start gap-5 py-5 border-b border-white/[0.03]">
+                                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                    <PencilSimpleIcon size={18} weight="duotone" className="text-white/40" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-400 mb-1">Project Name</p>
+                                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Project Name</p>
                                     {isRenaming ? (
                                         <div className="flex items-center gap-2">
                                             <input
@@ -274,30 +264,30 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                                                 onKeyDown={(e) => e.key === 'Enter' && handleRename()}
                                                 autoFocus
                                                 disabled={loadingAction === 'rename'}
-                                                className="flex-1 min-w-0 px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                                                className="flex-1 min-w-0 px-4 py-2 text-sm bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#BDF34E]/50 focus:border-[#BDF34E]/50 text-white transition-all"
                                             />
                                             <button
                                                 onClick={handleRename}
                                                 disabled={loadingAction === 'rename'}
-                                                className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                                                className="px-4 py-2 bg-[#BDF34E] text-black rounded-xl text-xs font-bold hover:bg-[#D4FF7E] disabled:opacity-50 transition-colors"
                                             >
                                                 {loadingAction === 'rename' ? 'Saving…' : 'Save'}
                                             </button>
                                             <button
                                                 onClick={() => setIsRenaming(false)}
-                                                className="px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 rounded-lg text-xs font-medium transition-colors"
+                                                className="px-3 py-2 text-white/40 hover:text-white hover:bg-white/5 rounded-xl text-xs font-bold transition-all"
                                             >
                                                 Cancel
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-1.5">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">{project.name}</p>
+                                        <div className="flex items-center gap-3">
+                                            <p className="text-sm font-bold text-white tracking-tight truncate">{project.name}</p>
                                             <button
                                                 onClick={() => { setNewName(project.name); setIsRenaming(true); }}
-                                                className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-all"
+                                                className="opacity-0 group-hover:opacity-100 p-2 text-white/30 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                                             >
-                                                <PencilSimpleIcon size={13} />
+                                                <PencilSimpleIcon size={14} />
                                             </button>
                                         </div>
                                     )}
@@ -305,57 +295,59 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                             </div>
 
                             {/* Description row */}
-                            <div className="row-2 flex items-start gap-3 py-3.5 border-b border-gray-50">
-                                <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-                                    <InfoIcon size={15} className="text-gray-400" />
+                            <div className="row-2 flex items-start gap-5 py-5 border-b border-white/[0.03]">
+                                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                    <InfoIcon size={18} weight="duotone" className="text-white/40" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-400 mb-1">Description</p>
+                                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Description</p>
                                     {project.description && project.description !== 'null' ? (
-                                        <p className="text-sm text-gray-700 leading-relaxed">{project.description}</p>
+                                        <p className="text-sm text-white/70 leading-relaxed">{project.description}</p>
                                     ) : (
-                                        <p className="text-sm text-gray-400 italic">No description provided</p>
+                                        <p className="text-sm text-white/20 italic">No description provided</p>
                                     )}
                                 </div>
                             </div>
 
                             {/* Status row */}
-                            <div className="row-3 flex items-start gap-3 py-3.5 border-b border-gray-50">
-                                <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-                                    <span className={`w-2.5 h-2.5 rounded-full ${cfg.dotClass}`} />
+                            <div className="row-3 flex items-start gap-5 py-5 border-b border-white/[0.03]">
+                                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                    <span className={`w-3 h-3 rounded-full ${cfg.dotClass}`} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-400 mb-1.5">Status</p>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.pillClass}`}>
+                                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-3">Analysis Status</p>
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        <span className={`inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] px-4 py-2 rounded-xl border ${cfg.pillClass}`}>
                                             <StatusIcon
-                                                size={13}
+                                                size={14}
                                                 weight="bold"
-                                                className={apkStatus === 'PROCESSING' ? 'spin-slow' : ''}
+                                                className={apkStatus === 'PROCESSING' || apkStatus === 'PENDING' ? 'spin-slow' : ''}
                                             />
                                             {cfg.label}
                                         </span>
-                                        <span className="text-xs text-gray-400">{cfg.detail}</span>
+                                        <span className="text-xs font-medium text-white/40">{cfg.detail}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* APK Source row */}
                             {project.apk?.sourceUrl && (
-                                <div className="row-4 flex items-start gap-3 py-3.5 border-b border-gray-50">
-                                    <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-                                        <LinkSimpleIcon size={15} className="text-gray-400" />
+                                <div className="row-4 flex items-start gap-5 py-5 border-b border-white/[0.03]">
+                                    <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                        <LinkSimpleIcon size={18} weight="duotone" className="text-white/40" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-gray-400 mb-1">Source URL</p>
+                                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Build Source</p>
                                         <a
                                             href={project.apk.sourceUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 font-mono bg-gray-50 border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors max-w-full truncate group/link"
+                                            className="inline-flex items-center gap-2 group/link"
                                         >
-                                            <span className="truncate">{project.apk.sourceUrl.replace('https://github.com/', '')}</span>
-                                            <ArrowSquareOutIcon size={11} className="shrink-0 opacity-50 group-hover/link:opacity-100 transition-opacity" />
+                                            <span className="text-xs font-bold text-white/60 hover:text-[#BDF34E] font-mono bg-white/5 border border-white/10 px-4 py-2 rounded-xl transition-all truncate hover:border-[#BDF34E]/40">
+                                                {project.apk.sourceUrl.replace('https://github.com/', '')}
+                                                <ArrowSquareOutIcon size={14} className="inline ml-2 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                                            </span>
                                         </a>
                                     </div>
                                 </div>
@@ -363,13 +355,13 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
 
                             {/* Created at row */}
                             {project.createdAt && (
-                                <div className="row-5 flex items-start gap-3 py-3.5">
-                                    <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-                                        <CalendarBlankIcon size={15} className="text-gray-400" />
+                                <div className="row-5 flex items-start gap-5 py-5">
+                                    <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                        <CalendarBlankIcon size={18} weight="duotone" className="text-white/40" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-gray-400 mb-1">Created</p>
-                                        <p className="text-sm text-gray-700">{formatDate(project.createdAt)}</p>
+                                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Created Date</p>
+                                        <p className="text-sm font-bold text-white tracking-tight">{formatDate(project.createdAt)}</p>
                                     </div>
                                 </div>
                             )}
@@ -377,54 +369,55 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                     </div>
 
                     {/* Footer actions */}
-                    <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 grid grid-cols-2 sm:flex sm:items-center gap-2.5">
+                    <div className="px-8 py-6 bg-white/[0.02] border-t border-white/5 grid grid-cols-2 sm:flex sm:items-center gap-4">
                         {/* Start Analysis */}
                         <button
                             onClick={handleStart}
                             disabled={isProcessDone || loadingAction === 'start'}
-                            className={`action-btn h-11 flex-1 flex items-center justify-center gap-2 px-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap
+                            className={`action-btn h-14 flex-1 flex items-center justify-center gap-3 px-6 rounded-2xl text-sm font-bold transition-all whitespace-nowrap shadow-xl
                                 ${isProcessDone
-                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                    : 'bg-slate-900 text-white shadow-sm hover:bg-slate-800'
+                                    ? 'bg-white/5 text-white/20 cursor-not-allowed grayscale'
+                                    : 'bg-[#BDF34E] text-black hover:bg-[#D4FF7E] shadow-[#BDF34E]/10'
                                 } ${loadingAction === 'start' ? 'opacity-70' : ''}`}
                         >
                             {loadingAction === 'start' ? (
-                                <SpinnerGapIcon size={16} className="animate-spin" />
+                                <SpinnerGapIcon size={18} className="animate-spin" />
                             ) : (
-                                <PlayIcon size={16} weight="fill" />
+                                <PlayIcon size={18} weight="fill" />
                             )}
-                            <span>{loadingAction === 'start' ? 'Starting…' : 'Run Analysis'}</span>
-                        </button>
-
-                        {/* Rename */}
-                        <button
-                            onClick={() => { setNewName(project.name); setIsRenaming(true); }}
-                            className="action-btn h-11 flex-1 flex items-center justify-center gap-2 px-3 border border-slate-200 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all whitespace-nowrap"
-                        >
-                            <PencilSimpleIcon size={16} />
-                            <span>Rename</span>
+                            <span>{loadingAction === 'start' ? 'Starting…' : 'Run Scan'}</span>
                         </button>
 
                         {/* View Report */}
                         {apkStatus === 'COMPLETED' && (
                             <button
                                 onClick={() => router.push(`/dashboard/projects/${project.id}/report`)}
-                                className="action-btn h-11 flex-1 flex items-center justify-center gap-2 px-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm whitespace-nowrap"
+                                className="action-btn h-14 flex-1 flex items-center justify-center gap-3 px-6 bg-white text-black rounded-2xl text-sm font-bold hover:bg-white/90 transition-all shadow-xl whitespace-nowrap"
                             >
-                                <ArrowSquareOutIcon size={16} weight="bold" />
-                                <span>View Report</span>
+                                <ArrowSquareOutIcon size={18} weight="bold" />
+                                <span>Report</span>
                             </button>
                         )}
 
-                        {/* Delete */}
-                        <button
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            disabled={loadingAction === 'delete'}
-                            className={`action-btn h-11 flex-1 flex items-center justify-center gap-2 px-3 border border-red-200 bg-white text-red-600 rounded-xl text-sm font-semibold hover:bg-red-50 transition-all whitespace-nowrap ${loadingAction === 'delete' ? 'opacity-70' : ''}`}
-                        >
-                            <TrashIcon size={16} />
-                            <span>Delete</span>
-                        </button>
+                        {/* Rename & Delete for secondary actions */}
+                        <div className="flex gap-4 sm:ml-auto">
+                            <button
+                                onClick={() => { setNewName(project.name); setIsRenaming(true); }}
+                                className="action-btn w-14 h-14 flex items-center justify-center border border-white/10 bg-white/5 text-white rounded-2xl hover:bg-white/10 transition-all shrink-0"
+                                title="Rename Project"
+                            >
+                                <PencilSimpleIcon size={20} />
+                            </button>
+
+                            <button
+                                onClick={() => setIsDeleteDialogOpen(true)}
+                                disabled={loadingAction === 'delete'}
+                                className={`action-btn w-14 h-14 flex items-center justify-center border border-red-400/20 bg-red-400/10 text-red-400 rounded-2xl hover:bg-red-400/20 transition-all shrink-0 ${loadingAction === 'delete' ? 'opacity-70' : ''}`}
+                                title="Delete Project"
+                            >
+                                <TrashIcon size={20} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,588 +1,408 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState, useCallback } from "react"
-import { useParams, useRouter } from "next/navigation"
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
-  ShieldCheckIcon,
-  ShieldWarningIcon,
-  ArrowLeftIcon,
-  BugIcon,
-  WarningIcon,
-  InfoIcon,
-  CaretDownIcon,
-  CaretUpIcon,
-  PackageIcon,
-  LockIcon,
-  TagIcon,
-  CircleNotchIcon,
-  ArrowRightIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  DownloadIcon,
-  type Icon as PhosphorIcon,
-} from "@phosphor-icons/react"
-import axios from "axios"
-
-import { PDFDownloadLink } from "@react-pdf/renderer"
-import { SecurityReportPDF } from "@/app/dashboard/components/ReportPDF"
+    ShieldCheckIcon,
+    ShieldWarningIcon,
+    ArrowLeftIcon,
+    BugIcon,
+    PackageIcon,
+    LockIcon,
+    TagIcon,
+    CircleNotchIcon,
+    ArrowRightIcon,
+    CheckCircleIcon,
+    XCircleIcon,
+    DownloadIcon,
+    CaretDownIcon,
+    CaretUpIcon,
+    WarningIcon,
+    InfoIcon,
+    type Icon as PhosphorIcon,
+} from "@phosphor-icons/react";
+import axios from "axios";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { SecurityReportPDF } from "@/app/dashboard/components/ReportPDF";
 
 // ─── Types ───────────────────────────────────────────────────────────
 interface ReportData {
-  project: { id: string; name: string }
-  apk: {
-    id: string
-    fileName: string | null
-    packageName: string | null
-    versionName: string | null
-    versionCode: number | null
-    status: string
-  }
-  score: {
-    value: number | null
-    grade: string | null
-    deductions: { reason: string; points: number; category: string }[]
-  }
-  severitySummary: {
-    critical: number
-    warning: number
-    info: number
-    total: number
-  }
-  vulnerabilities: Vulnerability[]
-  permissions: Permission[]
-  manifest: ManifestData
-  completedAt: string
+    project: { id: string; name: string };
+    apk: {
+        id: string;
+        fileName: string | null;
+        packageName: string | null;
+        versionName: string | null;
+        versionCode: number | null;
+        status: string;
+    };
+    score: {
+        value: number | null;
+        grade: string | null;
+        deductions: { reason: string; points: number; category: string }[];
+    };
+    severitySummary: {
+        critical: number;
+        warning: number;
+        info: number;
+        total: number;
+    };
+    vulnerabilities: Vulnerability[];
+    permissions: Permission[];
+    manifest: ManifestData;
+    completedAt: string;
 }
 
 interface Vulnerability {
-  ruleId: string
-  severity: "ERROR" | "WARNING" | "INFO"
-  message: string
-  category: string
-  owaspCategory: string | null
-  cwe: string[]
+    ruleId: string;
+    severity: "ERROR" | "WARNING" | "INFO";
+    message: string;
+    category: string;
+    owaspCategory: string | null;
+    cwe: string[];
 }
 
 interface Permission {
-  name: string
-  shortName: string
-  risk: "dangerous" | "normal" | "signature"
+    name: string;
+    shortName: string;
+    risk: "dangerous" | "normal" | "signature";
 }
 
 interface ManifestData {
-  packageName: string | null
-  debuggable: boolean
-  allowBackup: boolean
-  usesCleartextTraffic: boolean
-  networkSecurityConfig: boolean
-  minSdkVersion: number | null
-  targetSdkVersion: number | null
-  exportedComponents: { name: string; type: string; intentFilters: number }[]
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────
-function gradeLabel(grade: string | null): string {
-  switch (grade) {
-    case "A": return "Excellent"
-    case "B": return "Good"
-    case "C": return "Moderate"
-    case "D": return "Poor"
-    case "F": return "Critical"
-    default: return "Unrated"
-  }
-}
-
-function scoreColor(score: number): string {
-  if (score > 80) return "text-emerald-500"
-  if (score > 60) return "text-amber-500"
-  if (score > 40) return "text-orange-500"
-  return "text-red-500"
+    packageName: string | null;
+    debuggable: boolean;
+    allowBackup: boolean;
+    usesCleartextTraffic: boolean;
+    networkSecurityConfig: boolean;
+    minSdkVersion: number | null;
+    targetSdkVersion: number | null;
+    exportedComponents: { name: string; type: string; intentFilters: number }[];
 }
 
 // ─── Main Report Page ────────────────────────────────────────────────
-export default function ReportPage() {
-  const params = useParams()
-  const router = useRouter()
-  const projectId = params.id as string
+const ReportPage = () => {
+    const params = useParams();
+    const router = useRouter();
+    const projectId = params.id as string;
 
-  const [report, setReport] = useState<ReportData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"vulnerabilities" | "permissions" | "manifest">("vulnerabilities")
+    const [report, setReport] = useState<ReportData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<"vulnerabilities" | "permissions" | "manifest">("vulnerabilities");
 
-  const fetchReport = useCallback(async () => {
-    try {
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reports/${projectId}`,
-        { withCredentials: true }
-      )
-      setReport(data)
-    } catch (err: unknown) {
-      const errorMsg = axios.isAxiosError(err) ? err.response?.data?.error : "Failed to load report"
-      setError(errorMsg || "Failed to load report")
-    } finally {
-      setLoading(false)
-    }
-  }, [projectId])
+    const fetchReport = useCallback(async () => {
+        try {
+            const { data } = await axios.get(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reports/${projectId}`,
+                { withCredentials: true }
+            );
+            setReport(data);
+        } catch (err: any) {
+            const errorMsg = axios.isAxiosError(err) ? err.response?.data?.error : "Failed to load report";
+            setError(errorMsg || "Failed to load report");
+        } finally {
+            setLoading(false);
+        }
+    }, [projectId]);
 
-  useEffect(() => {
-    fetchReport()
-  }, [fetchReport])
+    useEffect(() => {
+        fetchReport();
+    }, [fetchReport]);
 
-  if (loading) return <LoadingState />
-  if (error) return <ErrorState error={error} onBack={() => router.push("/dashboard/projects")} />
-  if (!report) return null
+    if (loading) return <LoadingState />;
+    if (error) return <ErrorState error={error} onBack={() => router.push("/dashboard/projects")} />;
+    if (!report) return null;
 
-  return (
-    <div className="flex-1 min-h-screen bg-slate-50/50 overflow-y-auto">
-      <div className="max-w-[1400px] mx-auto p-8 space-y-8 animate-in fade-in duration-500">
+    const scoreValue = report.score.value ?? 0;
+    const radius = 80;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (scoreValue / 100) * circumference;
 
-        {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => router.push("/dashboard/projects")}
-              className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all shadow-sm"
-            >
-              <ArrowLeftIcon size={20} weight="bold" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                {report.project.name}
-              </h1>
-              <p className="text-sm font-medium text-slate-500 flex items-center gap-2 mt-1">
-                <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-bold text-slate-600">
-                  {report.apk.packageName || "Unknown"}
-                </code>
-                {report.apk.versionName && <span>· v{report.apk.versionName}</span>}
-                {report.completedAt && (
-                  <span>
-                    · Analyzed on {new Date(report.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          <PDFDownloadLink
-            document={<SecurityReportPDF data={report} />}
-            fileName={`${report.project.name}_Security_Report.pdf`}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 cursor-pointer"
-          >
-            {({ loading }) => (
-              <>
-                <DownloadIcon size={20} weight="bold" />
-                {loading ? "Preparing PDF..." : "Export PDF"}
-              </>
-            )}
-          </PDFDownloadLink>
-        </div>
-
-
-        {/* Top Grid: Overview Stats & Recent Event Summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <SecurityOverview summary={report.severitySummary} />
-          <QuickFindings findings={report.vulnerabilities} />
-        </div>
-
-        {/* Content Section: Detailed Tabs & Metrics Sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden min-h-[600px] flex flex-col">
-              {/* Tab Navigation */}
-              <div className="flex border-b border-slate-100 bg-slate-50/50">
-                <TabButton
-                  active={activeTab === "vulnerabilities"}
-                  icon={BugIcon}
-                  label="Vulnerabilities"
-                  count={report.vulnerabilities.length}
-                  onClick={() => setActiveTab("vulnerabilities")}
-                />
-                <TabButton
-                  active={activeTab === "permissions"}
-                  icon={ShieldCheckIcon}
-                  label="Permissions"
-                  count={report.permissions.length}
-                  onClick={() => setActiveTab("permissions")}
-                />
-                <TabButton
-                  active={activeTab === "manifest"}
-                  icon={PackageIcon}
-                  label="Manifest Analysis"
-                  onClick={() => setActiveTab("manifest")}
-                />
-              </div>
-
-              {/* Tab Content */}
-              <div className="p-8 flex-1">
-                {activeTab === "vulnerabilities" && <VulnerabilityList vulnerabilities={report.vulnerabilities} />}
-                {activeTab === "permissions" && <PermissionList permissions={report.permissions} />}
-                {activeTab === "manifest" && <ManifestView manifest={report.manifest} />}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <TrustScore score={report.score.value} grade={report.score.grade} />
-            {report.score.deductions.length > 0 && (
-              <Deductions list={report.score.deductions} />
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Layout Components ───────────────────────────────────────────────
-
-function TabButton({ active, icon: Icon, label, count, onClick }: {
-  active: boolean; icon: PhosphorIcon; label: string; count?: number; onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-8 py-5 flex items-center gap-3 text-sm font-bold transition-all border-b-2 outline-none cursor-pointer ${active
-        ? "text-blue-600 border-blue-600 bg-white"
-        : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-slate-100/30"
-        }`}
-    >
-      <Icon size={18} weight={active ? "fill" : "bold"} />
-      <span>{label}</span>
-      {count !== undefined && (
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${active ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-400"
-          }`}>
-          {count}
-        </span>
-      )}
-    </button>
-  )
-}
-
-function SecurityOverview({ summary }: { summary: ReportData["severitySummary"] }) {
-  return (
-    <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-      <div className="mb-8">
-        <h2 className="text-lg font-bold text-slate-900">Security Overview</h2>
-        <p className="text-sm text-slate-500 mt-1">Detailed breakdown of total detected threats.</p>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <StatCard label="Critical" count={summary.critical} icon={ShieldWarningIcon} color="red" />
-        <StatCard label="Warnings" count={summary.warning} icon={WarningIcon} color="amber" />
-        <StatCard label="Info" count={summary.info} icon={InfoIcon} color="blue" />
-      </div>
-    </div>
-  )
-}
-
-function StatCard({ label, count, icon: Icon, color }: { label: string; count: number; icon: PhosphorIcon; color: "red" | "amber" | "blue" }) {
-  const styles = {
-    red: "bg-red-50 text-red-500 border-red-100",
-    amber: "bg-amber-50 text-amber-500 border-amber-100",
-    blue: "bg-blue-50 text-blue-500 border-blue-100",
-  }
-  return (
-    <div className={`p-6 rounded-2xl border ${styles[color]} flex items-center gap-5 transition-transform hover:-translate-y-1`}>
-      <div className="bg-white p-3 rounded-xl shadow-sm shrink-0">
-        <Icon size={28} weight="duotone" />
-      </div>
-      <div>
-        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none mb-2">{label}</p>
-        <p className="text-3xl font-black leading-none tracking-tight">{count}</p>
-      </div>
-    </div>
-  )
-}
-
-function QuickFindings({ findings }: { findings: Vulnerability[] }) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-      <h2 className="text-lg font-bold text-slate-900 mb-6">Recent Findings</h2>
-      <div className="space-y-4">
-        {findings.length === 0 ? (
-          <p className="text-sm text-slate-400 py-10 text-center italic">No findings reported.</p>
-        ) : (
-          findings.slice(0, 5).map((f, i) => (
-            <div key={i} className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group cursor-default">
-              <div className={`shrink-0 mt-0.5 ${f.severity === "ERROR" ? "text-red-500" : "text-amber-500"}`}>
-                {f.severity === "ERROR" ? <ShieldWarningIcon size={16} weight="fill" /> : <WarningIcon size={16} weight="fill" />}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-800 truncate leading-tight group-hover:text-blue-100 transition-colors font-mono tracking-tight">{f.ruleId}</p>
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{f.message}</p>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  )
-}
-
-function TrustScore({ score, grade }: { score: number | null; grade: string | null }) {
-  const percentage = score || 0
-  const circumference = 2 * Math.PI * 80
-  const offset = circumference - (circumference * percentage) / 100
-  const colorClass = scoreColor(percentage)
-
-  return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center">
-      <h2 className="text-lg font-bold text-slate-900 self-start mb-8 tracking-tight">Trust Score</h2>
-
-      <div className="relative w-48 h-48 flex items-center justify-center scale-110 mb-8">
-        <svg width="180" height="180" viewBox="0 0 180 180" className="-rotate-90">
-          <circle cx="90" cy="90" r="80" strokeWidth="10" stroke="currentColor" fill="transparent" className="text-slate-100" />
-          <circle
-            cx="90" cy="90" r="80"
-            strokeWidth="10" stroke="currentColor" fill="transparent"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className={`${colorClass} transition-all duration-1000 ease-out`}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-5xl font-black text-slate-900 tracking-tighter leading-none">{percentage}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">/ 100</span>
-        </div>
-      </div>
-
-      <div className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-4">
-        <div className={`w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-2xl font-black ${colorClass}`}>
-          {grade || "–"}
-        </div>
-        <div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Rating</p>
-          <p className="text-sm font-bold text-slate-800 leading-none">{gradeLabel(grade)}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Deductions({ list }: { list: ReportData["score"]["deductions"] }) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-      <h2 className="text-lg font-bold text-slate-900 mb-6 tracking-tight">Score Deductions</h2>
-      <div className="space-y-3">
-        {list.map((d, i) => (
-          <div key={i} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-red-100 transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]" />
-              <span className="text-sm font-semibold text-slate-700 leading-tight">{d.reason}</span>
-            </div>
-            <span className="text-[11px] font-bold text-red-500 font-mono">-{d.points}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Inner Tab Components ───────────────────────────────────────────
-
-function VulnerabilityList({ vulnerabilities }: { vulnerabilities: Vulnerability[] }) {
-  const [showAll, setShowAll] = useState(false)
-  const displayed = showAll ? vulnerabilities : vulnerabilities.slice(0, 5)
-
-  if (vulnerabilities.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-4">
-        <CheckCircleIcon size={48} weight="duotone" className="text-emerald-400" />
-        <p className="text-sm font-medium italic">No vulnerabilities identified in this project.</p>
-      </div>
-    )
-  }
+        <div className="flex-1 min-h-screen bg-[#0D0D0D] overflow-y-auto">
+            <style>{`
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translateY(30px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .glass-card {
+                    background: rgba(255, 255, 255, 0.015);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    backdrop-filter: blur(20px);
+                }
+            `}</style>
 
-  return (
-    <div className="space-y-4">
-      {displayed.map((v, i) => (
-        <div key={i} className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:border-slate-300 transition-all flex items-start gap-5">
-          <div className={`p-2.5 rounded-xl shrink-0 ${v.severity === "ERROR" ? "bg-red-50 text-red-500" : "bg-amber-50 text-amber-500"}`}>
-            {v.severity === "ERROR" ? <ShieldWarningIcon size={22} weight="fill" /> : <WarningIcon size={22} weight="fill" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2">
-              <h4 className="font-bold text-slate-800 text-sm font-mono tracking-tight">{v.ruleId}</h4>
-              <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border ${v.severity === "ERROR" ? "bg-red-50 text-red-600 border-red-200" : "bg-amber-50 text-amber-600 border-amber-200"
-                }`}>
-                {v.severity === "ERROR" ? "Critical" : "Warning"}
-              </span>
-            </div>
-            <p className="text-sm text-slate-600 leading-relaxed mb-5">{v.message}</p>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-500">
-                <TagIcon size={12} weight="bold" />
-                <span className="text-[11px] font-bold font-mono tracking-tight">{v.category}</span>
-              </div>
-              {v.cwe.map(c => (
-                <span key={c} className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 font-mono">CWE-{c}</span>
-              ))}
-              <div className="ml-auto flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline cursor-pointer group">
-                Full Analysis <ArrowRightIcon size={14} weight="bold" className="group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-      {vulnerabilities.length > 5 && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm mt-4"
-        >
-          {showAll ? (
-            <><CaretUpIcon size={16} weight="bold" /> Show Less</>
-          ) : (
-            <><CaretDownIcon size={16} weight="bold" /> Show {vulnerabilities.length - 5} More Finding{vulnerabilities.length - 5 !== 1 ? 's' : ''}</>
-          )}
-        </button>
-      )}
-    </div>
-  )
-}
-
-function PermissionList({ permissions }: { permissions: Permission[] }) {
-  const [showAll, setShowAll] = useState(false)
-  const displayed = showAll ? permissions : permissions.slice(0, 8)
-
-  if (permissions.length === 0) {
-    return <div className="text-sm text-slate-400 text-center py-20 italic">No permissions declared.</div>
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {displayed.map((p, i) => (
-          <div key={i} className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-800 font-mono tracking-tight truncate">{p.shortName}</p>
-              <p className="text-[10px] font-bold text-slate-400 font-mono uppercase tracking-widest truncate opacity-80 mt-1">{p.name}</p>
-            </div>
-            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${p.risk === "dangerous" ? "bg-red-50 text-red-500 border-red-100" :
-              p.risk === "normal" ? "bg-emerald-50 text-emerald-500 border-emerald-100" :
-                "bg-blue-50 text-blue-500 border-blue-100"
-              }`}>
-              {p.risk}
-            </span>
-          </div>
-        ))}
-      </div>
-      {permissions.length > 8 && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="w-full py-4 text-sm font-bold text-slate-400 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-all cursor-pointer mt-4"
-        >
-          {showAll ? "Show Less" : `Show All ${permissions.length} Permissions`}
-        </button>
-      )}
-    </div>
-  )
-}
-
-function ManifestView({ manifest }: { manifest: ManifestData }) {
-  const flags = [
-    { label: "Debuggable", val: manifest.debuggable, bad: true, desc: "Controls if the app can be attached to a debugger." },
-    { label: "Allow Backup", val: manifest.allowBackup, bad: true, desc: "Determines if app data is included in system backups." },
-    { label: "Cleartext Traffic", val: manifest.usesCleartextTraffic, bad: true, desc: "Allows unencrypted HTTP network communication." },
-    { label: "Network Security Config", val: !!manifest.networkSecurityConfig, bad: false, desc: "Custom configuration for secure network connections." },
-  ]
-
-  return (
-    <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {flags.map(f => {
-          const isAtRisk = f.val === f.bad
-          return (
-            <div key={f.label} className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                {isAtRisk ? <XCircleIcon size={20} weight="fill" className="text-red-500 mt-0.5" /> : <CheckCircleIcon size={20} weight="fill" className="text-emerald-500 mt-0.5" />}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">{f.label}</h4>
-                  <p className="text-[11px] text-slate-500 leading-tight mt-1">{f.desc}</p>
-                </div>
-              </div>
-              <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${isAtRisk ? "bg-red-50 text-red-600 border-red-100" : "bg-emerald-50 text-emerald-600 border-emerald-200"
-                }`}>
-                {isAtRisk ? "Exposed" : "Secure"}
-              </span>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-8">
-        <div>
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Device Configuration</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Package ID</p>
-              <p className="text-sm font-bold text-slate-800 font-mono tracking-tight break-all leading-tight">{manifest.packageName || "—"}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Min API</p>
-              <p className="text-sm font-bold text-slate-800 font-mono leading-tight">Android API {manifest.minSdkVersion || "—"}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Target API</p>
-              <p className="text-sm font-bold text-slate-800 font-mono leading-tight">Android API {manifest.targetSdkVersion || "—"}</p>
-            </div>
-          </div>
-        </div>
-
-        {manifest.exportedComponents?.length > 0 && (
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Exposed Components ({manifest.exportedComponents.length})</h4>
-            <div className="space-y-2.5">
-              {manifest.exportedComponents.map((c, i) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl hover:border-blue-200 transition-all">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-md shrink-0">
-                      {c.type}
-                    </span>
-                    <span className="text-sm font-bold text-slate-700 font-mono tracking-tight truncate">
-                      {c.name}
-                    </span>
-                  </div>
-                  {c.intentFilters > 0 && (
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 rounded-xl border border-amber-100 shrink-0">
-                      <LockIcon size={12} weight="bold" className="text-amber-500" />
-                      <span className="text-[11px] font-bold text-slate-600">{c.intentFilters} filter{c.intentFilters !== 1 ? 's' : ''}</span>
+            <div className="max-w-7xl mx-auto p-8 space-y-10 animate-slide-up">
+                
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <button
+                            onClick={() => router.push("/dashboard/projects")}
+                            className="w-12 h-12 flex items-center justify-center bg-white/5 border border-white/10 rounded-2xl text-white/40 hover:text-[#BDF34E] hover:border-[#BDF34E]/30 transition-all group"
+                        >
+                            <ArrowLeftIcon size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform" />
+                        </button>
+                        <div>
+                            <h1 className="text-3xl font-bold text-white tracking-tight">{report.project.name}</h1>
+                            <div className="flex items-center gap-3 mt-1.5">
+                                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] bg-white/5 px-2 py-0.5 rounded">
+                                    {report.apk.packageName || "Unknown package"}
+                                </span>
+                                <span className="w-1 h-1 rounded-full bg-white/10" />
+                                <span className="text-xs font-medium text-white/40">v{report.apk.versionName || "1.0.0"}</span>
+                            </div>
+                        </div>
                     </div>
-                  )}
+
+                    <PDFDownloadLink
+                        document={<SecurityReportPDF data={report} />}
+                        fileName={`${report.project.name}_Audit.pdf`}
+                        className="flex items-center gap-3 bg-[#BDF34E] text-black px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#D4FF7E] transition-all shadow-xl shadow-[#BDF34E]/10"
+                    >
+                        {({ loading }) => (
+                            <>
+                                <DownloadIcon size={20} weight="bold" />
+                                {loading ? "Encrypting..." : "Export Findings"}
+                            </>
+                        )}
+                    </PDFDownloadLink>
                 </div>
-              ))}
+
+                {/* Dashboard Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                    
+                    {/* Trust Meter Card */}
+                    <div className="lg:col-span-4 glass-card rounded-[40px] p-10 flex flex-col items-center relative overflow-hidden group">
+                        <div className="absolute inset-x-0 -top-24 -left-24 w-64 h-64 bg-[#BDF34E]/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-[#BDF34E]/10 transition-colors" />
+                        
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mb-12">Trust Coefficient</h3>
+                        
+                        <div className="relative w-56 h-56 flex items-center justify-center">
+                            {/* SVG Meter with fixed sizing */}
+                            <svg className="absolute inset-0 -rotate-90" viewBox="0 0 200 200">
+                                <circle
+                                    cx="100" cy="100" r={radius}
+                                    fill="transparent"
+                                    stroke="rgba(255,255,255,0.03)"
+                                    strokeWidth="14"
+                                />
+                                <circle
+                                    cx="100" cy="100" r={radius}
+                                    fill="transparent"
+                                    stroke="#BDF34E"
+                                    strokeWidth="14"
+                                    strokeDasharray={circumference}
+                                    strokeDashoffset={offset}
+                                    strokeLinecap="round"
+                                    style={{
+                                        transition: 'stroke-dashoffset 1s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                                    }}
+                                />
+                            </svg>
+                            <div className="flex flex-col items-center">
+                                <span className="text-6xl font-black text-white tracking-tighter leading-none">{scoreValue}</span>
+                                <span className="text-[10px] font-bold text-[#BDF34E] uppercase tracking-widest mt-4">GRADE {report.score.grade || "–"}</span>
+                            </div>
+                        </div>
+
+                        <div className="w-full grid grid-cols-3 gap-3 mt-14 pt-10 border-t border-white/5">
+                            <div className="text-center">
+                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mb-1">Crit</p>
+                                <p className="text-lg font-bold text-red-500">{report.severitySummary.critical}</p>
+                            </div>
+                            <div className="text-center border-x border-white/5">
+                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mb-1">Warn</p>
+                                <p className="text-lg font-bold text-amber-500">{report.severitySummary.warning}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mb-1">Risk</p>
+                                <p className="text-lg font-bold text-blue-500">{report.severitySummary.info}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navigation and Content Area */}
+                    <div className="lg:col-span-8 flex flex-col gap-6">
+                        <div className="flex p-1.5 bg-white/5 border border-white/5 rounded-3xl h-fit">
+                            <NavTab active={activeTab === "vulnerabilities"} label="Vulnerabilities" count={report.vulnerabilities?.length} onClick={() => setActiveTab("vulnerabilities")} />
+                            <NavTab active={activeTab === "permissions"} label="Permissions" count={report.permissions?.length} onClick={() => setActiveTab("permissions")} />
+                            <NavTab active={activeTab === "manifest"} label="Manifest" onClick={() => setActiveTab("manifest")} />
+                        </div>
+
+                        <div className="flex-1 glass-card rounded-[40px] p-8 overflow-y-auto min-h-[500px]">
+                            {activeTab === "vulnerabilities" && <VulnerabilityView list={report.vulnerabilities || []} />}
+                            {activeTab === "permissions" && <PermissionView list={report.permissions || []} />}
+                            {activeTab === "manifest" && <ManifestView data={report.manifest} />}
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+        </div>
+    );
+};
+
+// ─── Subcomponents ──────────────────────────────────────────────────
+
+function NavTab({ active, label, count, onClick }: { active: boolean; label: string; count?: number; onClick: () => void }) {
+    return (
+        <button
+            onClick={onClick}
+            className={`flex-1 py-4 flex items-center justify-center gap-3 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] transition-all cursor-pointer ${
+                active ? "bg-[#BDF34E] text-black shadow-lg shadow-[#BDF34E]/10" : "text-white/40 hover:text-white"
+            }`}
+        >
+            {label}
+            {count !== undefined && <span className={`px-2 py-0.5 rounded-full text-[9px] ${active ? "bg-black/10 text-black/60" : "bg-white/5 text-white/20"}`}>{count}</span>}
+        </button>
+    );
+}
+
+function VulnerabilityView({ list }: { list: Vulnerability[] }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const displayCount = 6;
+    const items = isExpanded ? list : list.slice(0, displayCount);
+
+    if (!list || list.length === 0) return (
+        <div className="h-full flex flex-col items-center justify-center text-center py-20 min-h-[400px]">
+            <ShieldCheckIcon size={64} weight="duotone" className="text-[#BDF34E] mb-6 opacity-20" />
+            <p className="text-xl font-bold text-white mb-2">Vault Secure</p>
+            <p className="text-white/40 text-sm">No critical data leaks or injection points identified.</p>
+        </div>
+    );
+
+    return (
+        <div className="space-y-4">
+            {items.map((v, i) => (
+                <div key={i} className="bg-white/[0.02] border border-white/5 p-6 rounded-[28px] hover:bg-white/[0.04] transition-colors group">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="space-y-1">
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest ${v.severity === "ERROR" ? "bg-red-500/10 text-red-500" : "bg-amber-500/10 text-amber-500"}`}>
+                                {v.severity === "ERROR" ? "High Priority" : "Warning"}
+                            </span>
+                            <h4 className="text-base font-bold text-white font-mono mt-3 group-hover:text-[#BDF34E] transition-colors">{v.ruleId}</h4>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/20 group-hover:text-[#BDF34E] transition-colors">
+                            <ArrowRightIcon size={18} />
+                        </div>
+                    </div>
+                    <p className="text-sm text-white/40 leading-relaxed mb-6">{v.message}</p>
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-white/5">
+                        {v.cwe?.map(c => <span key={c} className="text-[10px] font-black text-white/20 border border-white/5 px-3 py-1.5 rounded-xl uppercase">CWE-{c}</span>)}
+                        <span className="text-[10px] font-black text-[#BDF34E] bg-[#BDF34E]/10 px-3 py-1.5 rounded-xl uppercase">{v.category}</span>
+                    </div>
+                </div>
+            ))}
+            
+            {list.length > displayCount && (
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="w-full py-5 flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-[24px] text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-[#BDF34E] transition-all cursor-pointer mt-6"
+                >
+                    {isExpanded ? (
+                        <><CaretUpIcon size={16} weight="bold" /> Collapse Findings</>
+                    ) : (
+                        <><CaretDownIcon size={16} weight="bold" /> Reveal {list.length - displayCount} More Findings</>
+                    )}
+                </button>
+            )}
+        </div>
+    );
+}
+
+function PermissionView({ list }: { list: Permission[] }) {
+    if (!list || list.length === 0) return (
+        <div className="h-full flex flex-col items-center justify-center text-center py-20 min-h-[400px]">
+             <LockIcon size={64} weight="duotone" className="text-white/10 mb-6" />
+             <p className="text-[#A1A1A1] text-sm">No sandbox permissions declared.</p>
+        </div>
+    );
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {list.map((p, i) => (
+                <div key={i} className="bg-white/[0.02] border border-white/5 p-5 rounded-[24px] flex items-center justify-between group hover:border-[#BDF34E]/20 transition-all">
+                    <div className="min-w-0 pr-4">
+                        <p className="text-sm font-bold text-white font-mono tracking-tight mb-1 truncate">{p.shortName}</p>
+                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">{p.risk} protocol</p>
+                    </div>
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${p.risk === "dangerous" ? "bg-red-500" : p.risk === "normal" ? "bg-[#BDF34E]" : "bg-blue-500"} shadow-lg`} />
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function ManifestView({ data }: { data: ManifestData }) {
+    if (!data) return null;
+    
+    const items = [
+        { label: "Compiler Debug", val: data.debuggable, danger: true, text: "Active debugging bridge" },
+        { label: "Cloud Backup", val: data.allowBackup, danger: true, text: "Automated data sync" },
+        { label: "Cleartext IO", val: data.usesCleartextTraffic, danger: true, text: "Unencrypted traffic" },
+        { label: "NetSec Config", val: data.networkSecurityConfig, danger: false, text: "Policy definition" },
+    ];
+
+    return (
+        <div className="space-y-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {items.map(it => (
+                    <div key={it.label} className="bg-white/[0.02] border border-white/5 p-6 rounded-[28px] flex items-center justify-between">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">{it.text}</p>
+                            <h4 className="text-sm font-bold text-white">{it.label}</h4>
+                        </div>
+                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${it.val === it.danger ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-[#BDF34E]/10 text-[#BDF34E] border-[#BDF34E]/20"}`}>
+                            {it.val === it.danger ? "Vulnerable" : "Secured"}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {data.exportedComponents?.length > 0 && (
+                <div className="pt-10 border-t border-white/5">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mb-8 text-center">Exposed Entrypoints</h4>
+                    <div className="space-y-3">
+                        {data.exportedComponents.map((c, i) => (
+                            <div key={i} className="bg-white/[0.02] border border-white/5 p-4 rounded-[20px] flex items-center gap-4 group hover:bg-white/[0.04] transition-colors">
+                                <span className="text-[9px] font-black bg-white/5 text-white/40 px-2 py-1 rounded-lg uppercase">{c.type}</span>
+                                <span className="text-sm font-bold text-white/60 font-mono truncate">{c.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
 
 function LoadingState() {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 h-screen">
-      <CircleNotchIcon size={40} className="animate-spin text-blue-500" />
-      <p className="text-sm font-bold text-slate-400 mt-6 animate-pulse">Running security audit...</p>
-    </div>
-  )
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#0D0D0D] h-screen">
+            <CircleNotchIcon size={48} className="animate-spin text-[#BDF34E]" />
+            <p className="text-[11px] font-bold text-white/20 uppercase tracking-[0.5em] mt-8 animate-pulse">Decrypting Audit Log</p>
+        </div>
+    );
 }
 
 function ErrorState({ error, onBack }: { error: string; onBack: () => void }) {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 h-screen p-6">
-      <div className="w-16 h-16 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center text-red-500 mb-6 shadow-sm">
-        <ShieldWarningIcon size={32} weight="duotone" />
-      </div>
-      <h3 className="text-xl font-bold text-slate-900 mb-2">Audit Unavailable</h3>
-      <p className="text-sm text-slate-500 max-w-sm text-center mb-8 leading-relaxed">{error}</p>
-      <button
-        onClick={onBack}
-        className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold text-sm transition-all hover:bg-slate-800 shadow-md shadow-slate-200 cursor-pointer"
-      >
-        <ArrowLeftIcon size={18} weight="bold" />
-        Return to Dashboard
-      </button>
-    </div>
-  )
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#0D0D0D] h-screen p-8 text-center">
+            <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-8 border border-white/10">
+                <XCircleIcon size={40} weight="duotone" className="text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4 tracking-tight">Audit unavailable</h2>
+            <p className="text-white/40 max-w-sm mb-12 text-lg">{error}</p>
+            <button
+                onClick={onBack}
+                className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-[#BDF34E] transition-all"
+            >
+                <ArrowLeftIcon size={18} weight="bold" />
+                Return to Surface
+            </button>
+        </div>
+    );
 }
+
+export default ReportPage;

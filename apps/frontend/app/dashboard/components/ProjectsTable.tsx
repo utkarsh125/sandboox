@@ -35,18 +35,18 @@ interface ProjectsTableProps {
 }
 
 const outcomeConfig = {
-    Passed: { icon: CheckCircleIcon, className: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-    Failed: { icon: XCircleIcon, className: 'text-red-500    bg-red-50    border-red-200' },
-    Pending: { icon: ClockIcon, className: 'text-amber-600  bg-amber-50  border-amber-200' },
-    'Not Run': { icon: MinusCircleIcon, className: 'text-gray-500   bg-gray-50   border-gray-200' },
+    Passed: { icon: CheckCircleIcon, className: 'text-[#BDF34E] bg-[#BDF34E]/10 border-[#BDF34E]/20' },
+    Failed: { icon: XCircleIcon, className: 'text-red-400    bg-red-400/10    border-red-400/20' },
+    Pending: { icon: ClockIcon, className: 'text-amber-400  bg-amber-400/10  border-amber-400/20' },
+    'Not Run': { icon: MinusCircleIcon, className: 'text-white/30   bg-white/5   border-white/10' },
 }
 
 const apkStatusConfig: Record<string, { label: string; dot: string }> = {
     PENDING: { label: 'Pending', dot: 'bg-amber-400 animate-pulse' },
-    READY: { label: 'Ready', dot: 'bg-blue-400' },
+    READY: { label: 'Ready', dot: 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]' },
     UPLOADED: { label: 'Uploaded', dot: 'bg-blue-400' },
-    PROCESSING: { label: 'Processing', dot: 'bg-purple-500 animate-pulse' },
-    COMPLETED: { label: 'Completed', dot: 'bg-emerald-400' },
+    PROCESSING: { label: 'Processing', dot: 'bg-[#BDF34E] animate-pulse shadow-[0_0_12px_#BDF34E]' },
+    COMPLETED: { label: 'Completed', dot: 'bg-[#BDF34E] shadow-[0_0_8px_#BDF34E]' },
     FAILED: { label: 'Failed', dot: 'bg-red-400' },
 }
 
@@ -68,12 +68,12 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
 
     if (projects.length === 0) {
         return (
-            <div className="bg-white border border-gray-100 rounded-2xl p-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center mx-auto mb-4">
-                    <FolderIcon size={30} weight="duotone" className="text-gray-300" />
+            <div className="bg-[#161616] border border-white/5 rounded-[32px] p-24 text-center">
+                <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
+                    <FolderIcon size={40} weight="thin" className="text-white/20" />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">No projects yet</h3>
-                <p className="text-xs text-gray-500">Create your first project to start testing</p>
+                <h3 className="text-lg font-bold text-white mb-2">No projects found</h3>
+                <p className="text-sm text-white/40">Drop an APK to start your first analysis</p>
             </div>
         )
     }
@@ -82,10 +82,10 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
         <>
             <style>{`
                 @keyframes rowIn {
-                    from { opacity: 0; transform: translateY(6px); }
+                    from { opacity: 0; transform: translateY(10px); }
                     to   { opacity: 1; transform: translateY(0); }
                 }
-                .project-row { animation: rowIn 0.2s ease both; }
+                .project-row { animation: rowIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
                 @keyframes spinSlow {
                     to { transform: rotate(360deg); }
                 }
@@ -93,26 +93,26 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
             `}</style>
 
             {actionError && (
-                <div className="flex items-center gap-2 px-4 py-2.5 mb-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
-                    <WarningCircleIcon size={15} className="shrink-0" />
+                <div className="flex items-center gap-3 px-6 py-4 mb-4 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-2xl">
+                    <WarningCircleIcon size={18} className="shrink-0" />
                     {actionError}
                 </div>
             )}
 
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-[#161616] border border-white/5 rounded-[32px] overflow-hidden shadow-2xl">
                 {/* Desktop table */}
                 <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-gray-100 bg-gray-50/60">
-                                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-5 py-3.5 w-[30%]">Name</th>
-                                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-5 py-3.5 w-[28%]">Description</th>
-                                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-5 py-3.5">Type</th>
-                                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-5 py-3.5">APK Status</th>
-                                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-5 py-3.5">Outcome</th>
+                            <tr className="border-b border-white/5 bg-white/[0.02]">
+                                <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] px-8 py-5 w-[30%]">Projects</th>
+                                <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] px-8 py-5 w-[28%]">Description</th>
+                                <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] px-8 py-5">Type</th>
+                                <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] px-8 py-5">Status</th>
+                                <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] px-8 py-5">Outcome</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
+                        <tbody className="divide-y divide-white/[0.02]">
                             {projects.map((project, i) => {
                                 const outcome = outcomeConfig[project.outcome as keyof typeof outcomeConfig] ?? outcomeConfig['Not Run']
                                 const OutcomeIcon = outcome.icon
@@ -124,42 +124,42 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                                     <tr
                                         key={project.id}
                                         onClick={() => onProjectClick?.(project)}
-                                        className="project-row hover:bg-blue-50/30 transition-colors cursor-pointer group"
-                                        style={{ animationDelay: `${i * 40}ms` }}
+                                        className="project-row hover:bg-white/[0.04] transition-all cursor-pointer group"
+                                        style={{ animationDelay: `${i * 50}ms` }}
                                     >
-                                        <td className="px-5 py-3.5">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-xl bg-green-100 border-green-500 border-1 flex items-center justify-center shrink-0 transition-colors">
-                                                    <AndroidLogoIcon size={15} weight="duotone" className="text-green-500" />
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-2xl bg-[#BDF34E]/10 border border-[#BDF34E]/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                                                    <AndroidLogoIcon size={18} weight="duotone" className="text-[#BDF34E]" />
                                                 </div>
-                                                <span className="text-sm font-semibold text-gray-900 truncate max-w-[160px]">
+                                                <span className="text-sm font-bold text-white tracking-tight truncate max-w-[200px]">
                                                     {project.name}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-3.5">
-                                            <span className={`text-sm line-clamp-1 ${!project.description || project.description === 'null' ? 'text-gray-400 italic' : 'text-gray-500'}`}>
-                                                {project.description && project.description !== 'null' ? project.description : 'No description'}
+                                        <td className="px-8 py-6">
+                                            <span className={`text-sm line-clamp-1 ${!project.description || project.description === 'null' ? 'text-white/20 italic' : 'text-white/40'}`}>
+                                                {project.description && project.description !== 'null' ? project.description : 'No description provided'}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3.5">
-                                            <span className="inline-flex items-center text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">
+                                        <td className="px-8 py-6">
+                                            <span className="inline-flex items-center text-[10px] font-bold text-white/60 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl uppercase tracking-wider">
                                                 {project.testType}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3.5">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700">
+                                        <td className="px-8 py-6">
+                                            <span className="inline-flex items-center gap-2.5 text-sm font-semibold text-white/80">
                                                 {isProcessing ? (
-                                                    <SpinnerGapIcon size={12} className="spin-slow text-purple-500" />
+                                                    <SpinnerGapIcon size={14} className="spin-slow text-[#BDF34E]" />
                                                 ) : (
                                                     <span className={`w-2 h-2 rounded-full ${statusCfg.dot}`} />
                                                 )}
                                                 {statusCfg.label}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3.5">
-                                            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${outcome.className}`}>
-                                                <OutcomeIcon size={13} weight="bold" />
+                                        <td className="px-8 py-6">
+                                            <span className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] px-4 py-2 rounded-xl border ${outcome.className}`}>
+                                                <OutcomeIcon size={14} weight="bold" />
                                                 {project.outcome}
                                             </span>
                                         </td>
@@ -171,7 +171,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                 </div>
 
                 {/* Mobile card list */}
-                <div className="sm:hidden divide-y divide-gray-50">
+                <div className="sm:hidden divide-y divide-white/[0.02]">
                     {projects.map((project, i) => {
                         const apkStatus = project.apk?.status || 'UPLOADED'
                         const statusCfg = apkStatusConfig[apkStatus] ?? apkStatusConfig['UPLOADED']
@@ -183,26 +183,26 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                             <div
                                 key={project.id}
                                 onClick={() => onProjectClick?.(project)}
-                                className="project-row flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50/60 cursor-pointer group"
-                                style={{ animationDelay: `${i * 40}ms` }}
+                                className="project-row flex items-center gap-4 px-6 py-5 hover:bg-white/[0.04] cursor-pointer group"
+                                style={{ animationDelay: `${i * 50}ms` }}
                             >
-                                <div className="w-9 h-9 rounded-xl bg-green-50 border border-green-200 flex items-center justify-center shrink-0 group-hover:bg-green-100 transition-colors">
-                                    <AndroidLogoIcon size={18} weight="duotone" className="text-green-600" />
+                                <div className="w-12 h-12 rounded-[20px] bg-[#BDF34E]/10 border border-[#BDF34E]/20 flex items-center justify-center shrink-0 group-hover:bg-[#BDF34E]/20 transition-colors">
+                                    <AndroidLogoIcon size={22} weight="duotone" className="text-[#BDF34E]" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-gray-900 truncate">{project.name}</p>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                                    <p className="text-sm font-bold text-white truncate">{project.name}</p>
+                                    <div className="flex items-center gap-3 mt-1.5">
+                                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-white/40">
                                             {isProcessing ? (
-                                                <SpinnerGapIcon size={10} className="spin-slow text-purple-500" />
+                                                <SpinnerGapIcon size={12} className="spin-slow text-[#BDF34E]" />
                                             ) : (
                                                 <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
                                             )}
                                             {statusCfg.label}
                                         </span>
-                                        <span className="text-gray-300">·</span>
-                                        <span className={`inline-flex items-center gap-1 text-xs font-medium ${outcome.className.split(' ')[0]}`}>
-                                            <OutcomeIcon size={11} weight="bold" />
+                                        <span className="text-white/10 uppercase tracking-tighter">|</span>
+                                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${outcome.className.split(' ')[0]}`}>
+                                            <OutcomeIcon size={12} weight="bold" />
                                             {project.outcome}
                                         </span>
                                     </div>
@@ -213,9 +213,9 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onRefresh, onPr
                 </div>
 
                 {/* Footer count */}
-                <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/40">
-                    <p className="text-xs text-gray-400">
-                        {projects.length} project{projects.length !== 1 ? 's' : ''}
+                <div className="px-8 py-5 border-t border-white/[0.02] bg-white/[0.01]">
+                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">
+                        {projects.length} Total Project{projects.length !== 1 ? 's' : ''}
                     </p>
                 </div>
             </div>

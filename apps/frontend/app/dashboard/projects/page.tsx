@@ -58,12 +58,12 @@ const ProjectsPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">Manage and monitor your testing projects</p>
+                    <h1 className="text-2xl font-bold text-white">Projects</h1>
+                    <p className="text-sm text-white/40 mt-0.5 font-medium">Manage and monitor your testing projects</p>
                 </div>
                 <button
                     onClick={() => setIsNewProjectModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 shadow-2xl shadow-blue-400 text-white px-3.5 py-2 text-sm font-medium cursor-pointer rounded-xl transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 bg-[#BDF34E] hover:bg-[#D4FF7E] text-black px-5 py-2.5 text-xs font-black uppercase tracking-widest cursor-pointer rounded-xl transition-all shadow-xl shadow-[#BDF34E]/10"
                 >
                     <PlusIcon size={16} weight="bold" />
                     New Project

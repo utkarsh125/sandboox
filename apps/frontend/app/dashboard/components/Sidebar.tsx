@@ -9,7 +9,7 @@ import {
     UserIcon,
     HouseIcon,
     FolderSimpleIcon,
-    ChartPieSlice
+    ChartPieSlice,
 } from '@phosphor-icons/react'
 import { signOut } from '@sandboox/auth/client'
 
@@ -18,21 +18,29 @@ interface NavItemProps {
     label: string
     href: string
     isActive?: boolean
+    isCollapsed?: boolean
 }
 
-const NavItem: React.FC<NavItemProps> = ({ icon, label, href, isActive }) => {
-    const baseClasses = "flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer"
-    const activeClasses = isActive ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"
+const NavItem: React.FC<NavItemProps> = ({ icon, label, href, isActive, isCollapsed }) => {
+    const baseClasses = "flex items-center gap-3 px-3 py-2 text-sm rounded-xl transition-all duration-200 cursor-pointer"
+    const activeClasses = isActive 
+        ? "bg-[#BDF34E] text-black font-semibold shadow-[0_0_20px_rgba(189,243,78,0.2)]" 
+        : "text-[#A1A1A1] hover:text-white hover:bg-white/5"
 
     return (
-        <Link href={href} className={`${baseClasses} ${activeClasses}`}>
+        <Link href={href} className={`${baseClasses} ${activeClasses} ${isCollapsed ? 'justify-center' : ''}`}>
             <span className="w-5 h-5 flex items-center justify-center">{icon}</span>
-            <span className="flex-1">{label}</span>
+            {!isCollapsed && <span className="flex-1">{label}</span>}
         </Link>
     )
 }
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+    isCollapsed: boolean
+    setIsCollapsed: (collapsed: boolean) => void
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     const pathname = usePathname()
     const router = useRouter()
     const [accountOpen, setAccountOpen] = useState(false)
@@ -62,7 +70,7 @@ const Sidebar: React.FC = () => {
     }
 
     return (
-        <aside className="w-64 bg-white border-r border-gray-100 h-screen flex flex-col overflow-y-auto">
+        <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-[#0D0D0D] border-r border-white/5 h-screen flex flex-col overflow-hidden transition-all duration-300 relative`}>
             <style>{`
                 @keyframes dropdownSlide {
                     from { opacity: 0; transform: translateY(-8px) scale(0.95); }
@@ -73,59 +81,66 @@ const Sidebar: React.FC = () => {
                     transform-origin: top;
                 }
             `}</style>
+
             {/* Logo */}
-            <div className="p-4 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                        <SnowflakeIcon size={18} weight="bold" className="text-white" />
+            <div className={`p-6 border-b border-white/5 ${isCollapsed ? 'flex justify-center' : ''}`}>
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#BDF34E] rounded-lg flex items-center justify-center shrink-0">
+                        <SnowflakeIcon size={18} weight="bold" className="text-black" />
                     </div>
-                    <span className="font-semibold text-gray-900">Sandboox</span>
+                    {!isCollapsed && <span className="font-bold text-lg tracking-tight text-white">Sandboox</span>}
                 </div>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-3 space-y-6">
+            <nav className={`flex-1 p-4 ${isCollapsed ? 'space-y-4' : 'space-y-8'}`}>
                 {/* Navigation Section */}
                 <div>
-                    <div className="px-3 mb-2">
-                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Overview</span>
-                    </div>
-                    <div className="space-y-0.5">
-                        <NavItem icon={<HouseIcon size={18} />} label="Overview" href="/dashboard" isActive={pathname === '/dashboard'} />
-                        <NavItem icon={<FolderSimpleIcon size={18} />} label="Projects" href="/dashboard/projects" isActive={pathname === '/dashboard/projects'} />
-                        <NavItem icon={<ChartPieSlice size={18} />} label="Reports" href="/dashboard/reports" isActive={pathname === '/dashboard/reports'} />
+                    {!isCollapsed && (
+                        <div className="px-3 mb-3">
+                            <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">General</span>
+                        </div>
+                    )}
+                    <div className="space-y-1">
+                        <NavItem icon={<HouseIcon size={20} weight={pathname === '/dashboard' ? 'fill' : 'regular'} />} label="Overview" href="/dashboard" isActive={pathname === '/dashboard'} isCollapsed={isCollapsed} />
+                        <NavItem icon={<FolderSimpleIcon size={20} weight={pathname === '/dashboard/projects' ? 'fill' : 'regular'} />} label="Projects" href="/dashboard/projects" isActive={pathname === '/dashboard/projects'} isCollapsed={isCollapsed} />
+                        <NavItem icon={<ChartPieSlice size={20} weight={pathname === '/dashboard/reports' ? 'fill' : 'regular'} />} label="Reports" href="/dashboard/reports" isActive={pathname === '/dashboard/reports'} isCollapsed={isCollapsed} />
                     </div>
                 </div>
 
                 {/* Account Section */}
                 <div>
-                    <div className="px-3 mb-2">
-                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Settings</span>
-                    </div>
-                    <div className="space-y-0.5 relative" ref={dropdownRef}>
+                    {!isCollapsed && (
+                        <div className="px-3 mb-3">
+                            <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Settings</span>
+                        </div>
+                    )}
+                    <div className="space-y-1 relative" ref={dropdownRef}>
                         <button
                             onClick={() => setAccountOpen(!accountOpen)}
-                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer ${accountOpen ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
-                                }`}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-xl transition-all duration-200 cursor-pointer ${accountOpen ? 'bg-white/10 text-white' : 'text-[#A1A1A1] hover:text-white hover:bg-white/5'
+                                } ${isCollapsed ? 'justify-center' : ''}`}
                         >
-                            <span className="w-5 h-5 flex items-center justify-center">
-                                <UserIcon size={18} />
+                            <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                                <UserIcon size={20} weight={accountOpen ? 'fill' : 'regular'} />
                             </span>
-                            <span className="flex-1 text-left">Account</span>
-                            <CaretUpIcon
-                                size={14}
-                                className={`text-gray-400 transition-transform ${accountOpen ? '' : 'rotate-180'}`}
-                            />
+                            {!isCollapsed && <span className="flex-1 text-left">Account</span>}
+                            {!isCollapsed && (
+                                <CaretUpIcon
+                                    size={14}
+                                    className={`text-white/20 transition-transform ${accountOpen ? '' : 'rotate-180'}`}
+                                />
+                            )}
                         </button>
 
                         {/* Dropdown */}
                         {accountOpen && (
-                            <div className="dropdown-anim absolute top-full left-0 w-full mt-0 overflow-hidden z-10 p-1">
+                            <div className={`dropdown-anim absolute ${isCollapsed ? 'left-full top-0 ml-3 w-48 bg-[#161616] border border-white/10 rounded-2xl shadow-2xl' : 'top-full left-0 w-full mt-2 bg-[#161616] border border-white/10 rounded-xl'} overflow-hidden z-30 p-1.5`}>
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:text-red-500 transition-colors cursor-pointer"
+                                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                                 >
-                                    <SignOutIcon size={16} weight="bold" />
+                                    <SignOutIcon size={18} weight="bold" />
                                     <span>Log out</span>
                                 </button>
                             </div>
@@ -135,10 +150,10 @@ const Sidebar: React.FC = () => {
             </nav>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-100">
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <SnowflakeIcon size={14} />
-                    <span>SANDBOOX</span>
+            <div className={`p-6 border-t border-white/5 ${isCollapsed ? 'flex justify-center' : ''}`}>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-white/20 tracking-widest">
+                    <SnowflakeIcon size={14} className="shrink-0" />
+                    {!isCollapsed && <span>SANDBOOX</span>}
                 </div>
             </div>
         </aside>

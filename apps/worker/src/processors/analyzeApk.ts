@@ -137,6 +137,20 @@ export async function analyzeProcessor(job: Job) {
       console.error(`[WORKER]DB Error update failed: `, dbError);
     }
     throw err;
+  } finally {
+    //CLEANUP
+    if (fs.existsSync(dir)) {
+      try {
+
+        fs.rmSync(dir, {
+          recursive: true,
+          force: true,
+        })
+        console.log(`[WORKER] Cleanup done for ${apkId}`);
+      } catch (cleanUpError: any) {
+        console.error(`[WORKER] failed to cleanup directory ${dir}: `, cleanUpError.message);
+      }
+    }
   }
 }
 
@@ -150,8 +164,8 @@ async function download(url: string, output: string) {
   if (finalUrl.includes("github.com") && finalUrl.includes("/blob/")) {
     finalUrl = finalUrl.replace("/blob/", "/raw/");
   } else if (finalUrl.includes("github.com") && !finalUrl.includes("/raw/") && !finalUrl.includes("raw.githubusercontent.com")) {
-      // Just in case it's a direct link to a file without blob but not raw
-      finalUrl = finalUrl.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/");
+    // Just in case it's a direct link to a file without blob but not raw
+    finalUrl = finalUrl.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/");
   }
 
   const res = await fetch(finalUrl, { redirect: 'follow' });

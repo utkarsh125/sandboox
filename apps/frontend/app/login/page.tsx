@@ -1,9 +1,20 @@
-"use client"
+"use client";
 
 import { useState } from "react";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { 
+    FingerprintIcon, 
+    EnvelopeIcon, 
+    LockIcon, 
+    ShieldCheckIcon,
+    CircleNotchIcon,
+    GithubLogoIcon,
+    ArrowRightIcon,
+    EyeIcon,
+    EyeSlashIcon
+} from "@phosphor-icons/react";
 import { signIn } from "@sandboox/auth/client";
 import { useRouter } from "next/navigation";
+import Link from 'next/link';
 
 export default function SignIn() {
     const [email, setEmail] = useState("");
@@ -26,7 +37,6 @@ export default function SignIn() {
             if (result.error) {
                 setError(result.error.message || "Failed to sign in");
             } else {
-                // Redirect to dashboard or home page after successful sign in
                 router.push("/dashboard");
             }
         } catch (err) {
@@ -37,7 +47,7 @@ export default function SignIn() {
         }
     };
 
-    const handleSocialSignIn = async (provider: "google" | "github") => {
+    const handleSocialSignIn = async (provider: "github") => {
         setLoading(true);
         setError("");
 
@@ -60,84 +70,130 @@ export default function SignIn() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-            <div className="w-full max-w-sm">
-                {/* Logo/Icon */}
-                <div className="mb-8 flex justify-center">
-                    <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-                        <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                            <path d="M2 17l10 5 10-5" />
-                            <path d="M2 12l10 5 10-5" />
-                        </svg>
-                    </div>
-                </div>
+        <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center p-6 lg:p-12 selection:bg-[#BDF34E] selection:text-black">
+            <style>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .glass-card {
+                    background: rgba(255, 255, 255, 0.015);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    backdrop-filter: blur(20px);
+                }
+                input:focus + div { border-color: #BDF34E !important; }
+            `}</style>
 
-                {/* Title */}
-                <div className="text-center mb-8">
-                    <h1 className="text-white text-xl font-semibold mb-2">
-                        Login to Sandboox
-                    </h1>
-                    <p className="text-gray-400 text-sm">
-                        Break your APK
-                        <br />
-                        Let&apos;s get started
+            <div className="w-full max-w-md space-y-12 animate-fade">
+                {/* Brand / Logo */}
+                <Link href="/" className="flex flex-col items-center gap-6 group">
+                    <div className="w-20 h-20 bg-[#BDF34E] rounded-[30px] flex items-center justify-center text-black shadow-2xl shadow-[#BDF34E]/20 transition-transform group-hover:scale-105">
+                        <ShieldCheckIcon size={40} weight="bold" />
+                    </div>
+                    <div className="text-center">
+                        <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">Sandboox</h1>
+                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mt-2">Security Protocol Active</p>
+                    </div>
+                </Link>
+
+                <div className="glass-card rounded-[40px] p-10 md:p-12 space-y-10 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#BDF34E]/30 to-transparent" />
+                    
+                    <div className="text-center space-y-2">
+                        <h2 className="text-2xl font-bold text-white tracking-tight">Access Interface</h2>
+                        <p className="text-sm text-white/30">Securely verify your credentials to continue.</p>
+                    </div>
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3">
+                             <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                             <p className="text-red-400 text-[11px] font-bold uppercase tracking-wider">{error}</p>
+                        </div>
+                    )}
+
+                    <div className="space-y-6">
+                        {/* Social Auth */}
+                        <button
+                            onClick={() => handleSocialSignIn('github')}
+                            disabled={loading}
+                            className="w-full flex items-center justify-center gap-4 py-5 bg-white text-black font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-[#BDF34E] transition-all shadow-xl shadow-black/20 disabled:opacity-50 group"
+                        >
+                            <GithubLogoIcon size={20} weight="fill" />
+                            Continue with GitHub
+                        </button>
+
+                        <div className="relative flex items-center py-4">
+                            <div className="flex-grow border-t border-white/5"></div>
+                            <span className="flex-shrink mx-4 text-[9px] font-black text-white/10 uppercase tracking-widest">OR USE TERMINAL</span>
+                            <div className="flex-grow border-t border-white/5"></div>
+                        </div>
+
+                        {/* Email Form */}
+                        <div className="space-y-4">
+                            <div className="space-y-1.5 group">
+                                <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">Protocol Identifier</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-white/30 group-focus-within:text-[#BDF34E] transition-colors">
+                                        <EnvelopeIcon size={18} />
+                                    </div>
+                                    <input
+                                        type="email"
+                                        placeholder="user@system.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        onKeyDown={handleKeyPress}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-sm text-white placeholder:text-white/10 outline-none focus:bg-white/[0.05] transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5 group">
+                                <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">Access Key</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-white/30 group-focus-within:text-[#BDF34E] transition-colors">
+                                        <LockIcon size={18} />
+                                    </div>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="············"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        onKeyDown={handleKeyPress}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-5 pl-14 pr-16 text-sm text-white placeholder:text-white/10 outline-none focus:bg-white/[0.05] transition-all"
+                                    />
+                                    <button 
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-5 flex items-center text-white/20 hover:text-white transition-colors"
+                                    >
+                                        {showPassword ? <EyeSlashIcon size={18} /> : <EyeIcon size={18} />}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleSignIn}
+                            disabled={loading || !email || !password}
+                            className="w-full py-5 bg-white/5 border border-white/10 hover:border-[#BDF34E]/30 text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-3 active:scale-[0.98]"
+                        >
+                            {loading ? (
+                                <CircleNotchIcon size={18} className="animate-spin" />
+                            ) : (
+                                <>Verify Interface <ArrowRightIcon size={16} weight="bold" /></>
+                            )}
+                        </button>
+                    </div>
+
+                    <p className="text-center text-[11px] font-medium text-white/30 pt-6">
+                        No clearance? <Link href="/register" className="text-[#BDF34E] hover:underline font-bold">Register Protocol</Link>
                     </p>
                 </div>
 
-                {/* Error Message */}
-                {error && (
-                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
-                        <p className="text-red-400 text-sm">{error}</p>
-                    </div>
-                )}
-
-                {/* Social Buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        onClick={() => handleSocialSignIn('google')}
-                        disabled={loading}
-                        className="google flex items-center hover:bg-[#A5F81D] hover:text-black justify-center gap-2 px-4 py-3 bg-transparent border border-gray-700 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 256 262">
-                            <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622l38.755 30.023l2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"></path>
-                            <path fill="#34A853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055c-34.523 0-63.824-22.773-74.269-54.25l-1.531.13l-40.298 31.187l-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"></path>
-                            <path fill="#FBBC05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82c0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602z"></path>
-                            <path fill="#EB4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"></path>
-                        </svg>
-                        <span className="text-sm">Google</span>
-                    </button>
-
-                    <button
-                        onClick={() => handleSocialSignIn('github')}
-                        disabled={loading}
-                        className="github flex hover:cursor-pointer hover:text-black hover:bg-[#A5F81D] items-center justify-center gap-2 px-4 py-3 bg-transparent border border-gray-700 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="1em"
-                            height="1em"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                fill="currentColor"
-                                d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2"
-                            ></path>
-                        </svg>
-                        <span className="text-sm">Github</span>
-                    </button>
+                <div className="text-center">
+                    <p className="text-[9px] font-black text-white/10 uppercase tracking-[0.3em]">Encrypted Session Phase 2.1</p>
                 </div>
-
-
             </div>
         </div>
     );
