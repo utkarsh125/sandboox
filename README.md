@@ -14,9 +14,6 @@
 
 
 
-https://github.com/user-attachments/assets/b664d5b8-b3f7-4246-93ae-8bfe65062db1
-
-
 
 Sandboox is a comprehensive platform designed to analyze and expose vulnerabilities in Android applications (APKs) and web applications. It provides developers and security researchers with an automated toolkit to identify security flaws before they can be exploited.
 
